@@ -1,0 +1,88 @@
+ENGINE> bind_helper: Engine id = Stsafe
+ENGINE> bind_helper: ENGINE_set_id completed
+ENGINE> bind_helper: ENGINE_set_name completed
+ENGINE> bind_helper: ENGINE_set_init_function completed
+ENGINE> bind_helper: ENGINE_set_RAND completed
+ENGINE> bind_helper: ENGINE_set_ctrl_function completed
+ENGINE> bind_helper: ENGINE_set_cmd_defns completed
+stsafe_get_EC_methods called 
+EC_KEY_METHOD_set_sign.
+EC_KEY_METHOD_set_verify.
+EC_KEY_METHOD_set_keygen.
+EC_KEY_METHOD_set_compute_key.
+ENGINE> bind_helper: ENGINE_set_EC completed
+ENGINE> bind_helper: ENGINE_set_load_pubkey_function completed
+ENGINE> bind_helper: ENGINE_set_load_privkey_function completed
+stsafe_pkey_meth_init called
+stsafe_pkey_meth_init finished
+ENGINE> bind_helper: stsafe_pkey_meth_init completed
+ENGINE> bind_helper: ENGINE_set_pkey_meths completed
+ENGINE> bind_helper: calling Engine_set_finish_function
+ENGINE> bind_helper: ENGINE_set_finish_function completed
+ENGINE> bind_helper: calling ENGINE_set_default
+Using Openssl     : OpenSSL 1.1.1g  21 Apr 2020
+StSafeA_HostKeys_Init called.
+set host keys.
+STSAFE-A110 StSafeA_CreateHandle = 5, pStSafeA->InOutBuffer = c000000, pStSafeA->InOutBuffer.LV.Data = 176baa4
+StSafeA_GetDataBufferSize(): 523
+About to call StSafeA_LocalEnvelopeKeySlotQuery: 16ad8c8, 16ad8d8, 16ad8e8 
+StSafeA_BuildCommandHeaderCMAC returns: 14
+StSafeA_MAC_SHA_PreProcess called. Statuscode = 0
+in_buffer_length: 3
+i2c_length: 4
+Send Command QUERY LOCAL_ENVELOPE_KEY_TABL 0x14                 size =    3
+
+response_length: 9
+StSafeA_MAC_SHA_PostProcess called. Statuscode = 0
+StSafeA_LocalEnvelopeKeySlotQuery: 0 slot 0: presence flag =1 
+StSafeA_LocalEnvelopeKeySlotQuery: 0 slot 1: presence flag =1 
+---HostKeySlot = 16abc88, pStSafeA->InOutBuffer.LV.Data = 76baa73c
+StSafeA_BuildCommandHeaderCMAC returns: 14
+StSafeA_MAC_SHA_PreProcess called. Statuscode = 0
+in_buffer_length: 3
+i2c_length: 4
+Send Command QUERY HOST_KEY_SLOT_TAG   0x14                 size =    3
+
+response_length: 6
+StSafeA_MAC_SHA_PostProcess called. Statuscode = 0
+HostKeySlot->HostKeyPresenceFlag: 1 
+Main : stsafe_pairing success 
+
+************^^^^^^^^^^^^*************** 
+Setting STSAFE-A110 host keys
+StSafeA_HostKeys_Init called.
+set host keys.
+
+************vvvvvvvvvvvv*************** 
+stsafe_pkey_meths called nid=0
+ENGINE> bind_helper: ENGINE_set_default completed
+stsafe_cmd_ctrl in ACTION!!! cmd = 203
+ENGINE> stsafe_cmd_ctrl: Setting STSAFE generate key slot to 1
+stsafe_ec_generate_key called.
+STSAFE-EC> stsafe_ec_generate_key: Using Slot 1
+STSAFE-EC> stsafe_ec_generate_key: Curve secp384r1 -> STSAFEA_NIST_P_384
+StSafeA_GenerateKeyPair: Use key slot number 1. pOutPubX = 7ed39470, pOutPubY = 7ed39478, pOutPointReprensentationId = 7ed3946c
+StSafeA_BuildCommandHeaderCMAC returns: 11
+Genkey Command string: 13 01 ff ff 80 0d 00 05 2b 81 04 00 22 
+StSafeA_MAC_SHA_PreProcess called. Statuscode = 0
+in_buffer_length: 15
+i2c_length: 16
+Send Command GENERATE_KEY              0x11                 size =   15
+
+response_length: 103
+StSafeA_MAC_SHA_PostProcess called. Statuscode = 0
+STSAFE-EC> stsafe_ec_generate_key: X:Length 48 Data 0x3e 0x4d 0x32 0xde 0xc0 0x83 0x28 0x30 0x4c 0x33 0x86 0x72 0x36 0x8c 0xb6 0x99 0xdd 0x34 0x1e 0xdf 0xe0 0x5b 0xde 0x34 0x01 0x7e 0xf9 0x39 0xe9 0x5b 0xdc 0xbb 0xcc 0xe7 0xb5 0x1e 0x57 0x1a 0x30 0x75 0x7f 0x9c 0xc0 0xfa 0xf8 0x2b 0xcd 0x1e 
+STSAFE-EC> stsafe_ec_generate_key: Y:Length 48 Data 0x5a 0x3d 0x5c 0xb9 0xff 0xc6 0x25 0x45 0xcf 0x1d 0x9e 0x80 0x13 0x27 0x29 0x8e 0xfd 0x1d 0x63 0xf7 0x2d 0x06 0xf0 0xcb 0xb7 0x95 0x1a 0x6d 0x9d 0xbd 0xff 0x6a 0xe9 0xa3 0x67 0x37 0x67 0xe5 0x9a 0xf2 0xf7 0x80 0xc5 0x87 0x0d 0xb3 0xaf 0x20 
+3E4D32DEC08328304C338672368CB699DD341EDFE05BDE34017EF939E95BDCBBCCE7B51E571A30757F9CC0FAF82BCD1E
+5A3D5CB9FFC62545CF1D9E801327298EFD1D63F72D06F0CBB7951A6D9DBDFF6AE9A3673767E59AF2F780C5870DB3AF20
+Stsafe engine random length 48
+StSafeA_BuildCommandHeaderCMAC returns: 2
+StSafeA_MAC_SHA_PreProcess called. Statuscode = 0
+in_buffer_length: 4
+i2c_length: 5
+Send Command GENERATE_RANDOM           0x02                 size =    4
+
+response_length: 50
+StSafeA_MAC_SHA_PostProcess called. Statuscode = 0
+
+STSAFE> stsafe_get_random_bytes:  Success Random number = 0x6fd28f762ce78c960dec5cc6a5c50af5f418cbf12fa5450625d5538e5951f970303e91406484003058495ce1bba25a6a

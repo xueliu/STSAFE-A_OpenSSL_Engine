@@ -1,0 +1,4 @@
+08 june 2021 / STSW-STSA110-SSL V1.2.0 Release note 
+
+- This release add support for new middleware STSAFE-A110 V3.3.2 (see dedicated release note inside lib directory)
+- It add feature of pairing STSAFE-A110 with host (Set host keys)

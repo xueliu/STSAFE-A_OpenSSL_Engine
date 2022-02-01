@@ -1,0 +1,625 @@
+STSAFE OpenSSL Engine Test Suite
+--------------------------------
+
+Run Date: Thu Nov 12 14:07:46 2020
+
+==============================================================
+===== Pre Test Configuration                             =====
+==============================================================
+==============================================================
+===== PASS Pre Test Configuration                        =====
+==============================================================
+
+==============================================================
+===== Test 1 STSAFE Load Engine                          =====
+==============================================================
+ENGINE> bind_helper: Engine id = Stsafe
+ENGINE> bind_helper: ENGINE_set_id completed
+ENGINE> bind_helper: ENGINE_set_name completed
+ENGINE> bind_helper: ENGINE_set_init_function completed
+ENGINE> bind_helper: ENGINE_set_RAND completed
+ENGINE> bind_helper: ENGINE_set_ctrl_function completed
+ENGINE> bind_helper: ENGINE_set_cmd_defns completed
+stsafe_get_EC_methods called 
+EC_KEY_METHOD_set_sign.
+EC_KEY_METHOD_set_verify.
+EC_KEY_METHOD_set_keygen.
+EC_KEY_METHOD_set_compute_key.
+ENGINE> bind_helper: ENGINE_set_EC completed
+ENGINE> bind_helper: ENGINE_set_load_pubkey_function completed
+ENGINE> bind_helper: ENGINE_set_load_privkey_function completed
+stsafe_pkey_meth_init called
+stsafe_pkey_meth_init finished
+ENGINE> bind_helper: stsafe_pkey_meth_init completed
+ENGINE> bind_helper: ENGINE_set_pkey_meths completed
+ENGINE> bind_helper: calling Engine_set_finish_function
+ENGINE> bind_helper: ENGINE_set_finish_function completed
+ENGINE> bind_helper: calling ENGINE_set_default
+Using Openssl     : OpenSSL 1.1.1g  21 Apr 2020
+STSAFE-A110 StSafeA_CreateHandle = 5, pStSafeA->InOutBuffer = 0, pStSafeA->InOutBuffer.LV.Data = 0
+StSafeA_GetDataBufferSize(): 523
+About to call StSafeA_LocalEnvelopeKeySlotQuery: 367a68, 367ab8, 3661f8 
+StSafeA_LocalEnvelopeKeySlotQuery: 0 slot 0: presence flag =1 
+StSafeA_LocalEnvelopeKeySlotQuery: 0 slot 1: presence flag =1 
+---HostKeySlot = 3643b8, pStSafeA->InOutBuffer.LV.Data = 76f2c6ec
+HostKeySlot->HostKeyPresenceFlag: 1 
+Main : stsafe_pairing success 
+
+************^^^^^^^^^^^^*************** 
+Setting STSAFE-A110 host keys
+
+************vvvvvvvvvvvv*************** 
+stsafe_pkey_meths called nid=0
+ENGINE> bind_helper: ENGINE_set_default completed
+==============================================================
+===== PASS Test 1 STSAFE Load Engine                     =====
+==============================================================
+
+==============================================================
+===== Test 2 STSAFE Engine Init                          =====
+==============================================================
+==============================================================
+===== PASS Test 2 STSAFE Engine Init                     =====
+==============================================================
+
+==============================================================
+===== Test 3 STSAFE Get product Data                     =====
+==============================================================
+stsafe_cmd_ctrl in ACTION!!! cmd = 200
+STSAFE-A110 Product Information
+-------------------------------
+MaskIdentification           : aa4602
+ST Product Number            : a021e021c4e1d00139
+InputOutputBufferSize        : 507
+AtomicityBufferSize          : 64
+NonVolatileMemorySize        : 6376
+TestDate                     : 37649
+InternalProductVersionSize   : 69
+ModuleDate                   : 37713
+FirmwareDeliveryTraceability : 000000
+BlackboxDeliveryTraceability : 000000
+PersoId                      : 000000
+PersoGenerationBatchId       : 000000
+PersoDate                    : 000000
+==============================================================
+===== PASS Test 3 STSAFE Get product Data                =====
+==============================================================
+
+==============================================================
+===== Test 4 STSAFE Wrap Data                            =====
+==============================================================
+===== Generate 480 bytes of data to wrap
+stsafe_AES_wrap_key called.
+envelopeIn
+0x30bd45487b91aef2
+0xa5500d323fb4c63b
+0xd9a557fa4cdad362
+0xceba255a7d2de0ae
+0xea25f665b6a4575c
+0xf4648e3418546ff1
+0xf9c6ec45a0bfa86f
+0x79cdc9f7faa9a5e4
+0xce9b49843fa0e033
+0x056e671dc2d60fbb
+0x9cfb013dbaa9ac34
+0x76752b711ed055ec
+0x6b9f70aa3f51dd44
+0xbf4562821b713db8
+0x6c3ef526e7a15a5e
+0x1685cf34552420c0
+0xc3906a03e14847a1
+0x8da923a81a606086
+0x9f55ad86f607e40c
+0x8db340e2d860a39b
+0xf10d9ed255e673e2
+0x8f968baaf7eb3096
+0x41dd1c37e5014472
+0xb484548ce5f728d6
+0x05c6a85aac1c3d3c
+0xb2c8e6a9b3163ff4
+0xf45c2cd95d704b11
+0xf49f9ed997c6af9c
+0x8c58f63974337526
+0xfb5bd0af710fa365
+0x6bcf3ec83f89da34
+0x29780dc03ebd5cca
+0x155203898678af81
+0xd37f30458fd4aafa
+0xa3e9c3e3729d179b
+0x15245b53e1b71df6
+0x0a217f90992f116d
+0xae42b23d165c38b9
+0x45fb9cb898b353ad
+0xd8af00b9661db070
+0x3e2f00d85e12450d
+0x54f74a6a53822399
+0x7dc0511573a4c24b
+0x53c205bae0b52a1e
+0xe42bf6433d3b5091
+0x329afb861d1e1f9a
+0xde70b05214729d68
+0x35a22215574c333c
+0x772a7fb465cf4598
+0x69401e865f3d213d
+0xadd18fc1432d2978
+0xcf4b8d2798c1630f
+0xebe2c450b109e81a
+0x4a06a1a943c2e6f0
+0x9376b2d6a3db4f72
+0x27dc99bf9dfcce88
+0xde92d98f9cc1aae6
+0xc84b8f0b0d75fca0
+0xebae768e89c501b0
+0xa29a6f3f973ec875
+==============================================================
+===== PASS Test 4 STSAFE Wrap Data                       =====
+==============================================================
+
+==============================================================
+===== Test 5 STSAFE Unwrap Data                          =====
+==============================================================
+stsafe_AES_unwrap_key called.
+==============================================================
+===== PASS Test 5 STSAFE Unwrap Data                     =====
+==============================================================
+
+==============================================================
+===== Test 6 STSAFE ECDSA Sign/Verify                    =====
+==============================================================
+===== Setup for test
+===== Read certificate from STSAFE
+stsafe_cmd_ctrl in ACTION!!! cmd = 201
+ENGINE> stsafe_cmd_ctrl: STSAFE_CMD_GET_DEVICE_CERT Device-Cert.pem
+STSAFE> readCertificate: OPENSSL_malloc size is 523 bytes
+STSAFE> readCertificate: certificateSize 402 numWrites 1 finalBytes 402
+STSAFE> readCertificate: Read number 00 numBytesRead: 402
+STSAFE> readCertificate: Chunk data                 : 3082018e30820134a003020102020b0209a021e021c4e1d00139300a06082a8648ce3d040302304f310b3009060355040613024e4c311e301c060355040a0c1553544d6963726f656c656374726f6e696373206e763120301e06035504030c1753544d205354534146452d4120544553542043412030313020170d3230303930323030303030305a180f32303530303930333030303030305a3046310b3009060355040613024652311b3019060355040a0c1253544d6963726f656c656374726f6e696373311a301806035504030c115354534146452d41313130204556414c323059301306072a8648ce3d020106082a8648ce3d03010703420004f0f949ba8040bb4033cad02ef6784f6490a3b199c0ba9a0f4e3def634af3d505bbb365fe4453975b1257cab900b0436e5a31c27d5ac4ab8fc55337fb5c16e935300a06082a8648ce3d0403020348003045022100d43ce253be5699e1644ffc23dd63dc23289cf67832dfde9e59623df770709b5f02202d50e888c8ba3f0825d735813569c71a9716ed60dbf8d9ff1b9cf6a0ed0d7335
+Copying 402 bytes to 0x3657f8
+STSAFE> readCertificate: Device certificate size: 402
+STSAFE> readCertificate: Device certificate     : 3082018e30820134a003020102020b0209a021e021c4e1d00139300a06082a8648ce3d040302304f310b3009060355040613024e4c311e301c060355040a0c1553544d6963726f656c656374726f6e696373206e763120301e06035504030c1753544d205354534146452d4120544553542043412030313020170d3230303930323030303030305a180f32303530303930333030303030305a3046310b3009060355040613024652311b3019060355040a0c1253544d6963726f656c656374726f6e696373311a301806035504030c115354534146452d41313130204556414c323059301306072a8648ce3d020106082a8648ce3d03010703420004f0f949ba8040bb4033cad02ef6784f6490a3b199c0ba9a0f4e3def634af3d505bbb365fe4453975b1257cab900b0436e5a31c27d5ac4ab8fc55337fb5c16e935300a06082a8648ce3d0403020348003045022100d43ce253be5699e1644ffc23dd63dc23289cf67832dfde9e59623df770709b5f02202d50e888c8ba3f0825d735813569c71a9716ed60dbf8d9ff1b9cf6a0ed0d7335
+STSAFE> readCertificate: Store the certificate to Device-Cert.pem
+===== Certificate written to Device-Cert.pem
+===== Generate digest
+===== ECDSA sign
+
+stsafe_engine_ecdsa_do_sign digest_len = 32
+StSafeA_GenerateSignature : RLength=32 SLength=32
+
+
+Input Hash size:32 
+09a64a87239d21c118b112d385574319ff396e42e0f8ed0a161ff9bb22fa9d0d
+
+Signature R size:32 
+9404422966b2688a81dc359e6313ae2ecc63a26abc95c8d3799d2a74b597b574
+Signature S size:32 
+730f9503375454148efdac6aef5e969657bb30596417b74bbaa7b417a9437164
+
+===== ECDSA Verify Process
+===== Open Device-Cert.pem file
+===== Read certificate from Device-Cert.pem
+===== Get public key from certificate
+===== Do verification
+stsafe_engine_ecdsa_do_verify called
+StSafeA_VerifyMessageSignature called, StatusCode:0 SignatureValidity=1
+stsafe ecdsa verfiy end! result 1
+===== Verification Success
+==============================================================
+===== PASS Test 6 STSAFE ECDSA Sign/Verify               =====
+==============================================================
+
+==============================================================
+===== Test 7 STSAFE ECDH/Generate Ephemeral Keys         =====
+==============================================================
+===== Setup for test
+STSAFE-EC> stsafe_ec_generate_key called.
+STSAFE-EC> stsafe_ec_generate_key: Using Slot 255
+STSAFE-EC> stsafe_ec_generate_key: Curve prime256v1 -> STSAFEA_NIST_P_256
+STSAFE-EC> stsafe_ec_generate_key: X:Length 32 Data 0x59 0x9f 0x2e 0x5b 0x24 0x48 0x10 0x88 0x07 0xd5 0x22 0x00 0x77 0x9e 0x18 0xcc 0x61 0x4d 0x01 0xa7 0x73 0x0f 0x84 0x27 0x06 0x38 0x02 0xbb 0x53 0x05 0x00 0x06 
+STSAFE-EC> stsafe_ec_generate_key: Y:Length 32 Data 0xc2 0x25 0xd0 0x07 0xbe 0xab 0x40 0x8c 0x39 0x91 0x66 0xd9 0x34 0x86 0xdc 0xa4 0x66 0xc6 0x77 0xa4 0x26 0xcb 0xe4 0xb2 0xb3 0x4b 0x3a 0x33 0x7d 0x04 0xef 0x80 
+599F2E5B2448108807D52200779E18CC614D01A7730F8427063802BB53050006
+C225D007BEAB408C399166D93486DCA466C677A426CBE4B2B34B3A337D04EF80
+stsafe_engine_ecdh_compute_key called
+STSAFE-EC> stsafe_ecdh_compute_key: Using Slot 255
+STSAFE-EC> stsafe_ecdh_compute_key: EC_POINT_point2oct len 65
+Before calling StSafeA_EstablishKey.
+STSAFE-EC> stsafe_ecdh_compute_key: StatusCode = 0, outlen = 32
+==============================================================
+===== PASS Test 7 STSAFE ECDH/Generate Ephemeral Keys    =====
+==============================================================
+
+==============================================================
+===== Test 8 STSAFE Private Key Methods                  =====
+==============================================================
+===== Setup for test
+===== Read certificate from STSAFE
+stsafe_cmd_ctrl in ACTION!!! cmd = 201
+ENGINE> stsafe_cmd_ctrl: STSAFE_CMD_GET_DEVICE_CERT Device-Cert.pem
+STSAFE> readCertificate: OPENSSL_malloc size is 523 bytes
+STSAFE> readCertificate: certificateSize 402 numWrites 1 finalBytes 402
+STSAFE> readCertificate: Read number 00 numBytesRead: 402
+STSAFE> readCertificate: Chunk data                 : 3082018e30820134a003020102020b0209a021e021c4e1d00139300a06082a8648ce3d040302304f310b3009060355040613024e4c311e301c060355040a0c1553544d6963726f656c656374726f6e696373206e763120301e06035504030c1753544d205354534146452d4120544553542043412030313020170d3230303930323030303030305a180f32303530303930333030303030305a3046310b3009060355040613024652311b3019060355040a0c1253544d6963726f656c656374726f6e696373311a301806035504030c115354534146452d41313130204556414c323059301306072a8648ce3d020106082a8648ce3d03010703420004f0f949ba8040bb4033cad02ef6784f6490a3b199c0ba9a0f4e3def634af3d505bbb365fe4453975b1257cab900b0436e5a31c27d5ac4ab8fc55337fb5c16e935300a06082a8648ce3d0403020348003045022100d43ce253be5699e1644ffc23dd63dc23289cf67832dfde9e59623df770709b5f02202d50e888c8ba3f0825d735813569c71a9716ed60dbf8d9ff1b9cf6a0ed0d7335
+Copying 402 bytes to 0x368098
+STSAFE> readCertificate: Device certificate size: 402
+STSAFE> readCertificate: Device certificate     : 3082018e30820134a003020102020b0209a021e021c4e1d00139300a06082a8648ce3d040302304f310b3009060355040613024e4c311e301c060355040a0c1553544d6963726f656c656374726f6e696373206e763120301e06035504030c1753544d205354534146452d4120544553542043412030313020170d3230303930323030303030305a180f32303530303930333030303030305a3046310b3009060355040613024652311b3019060355040a0c1253544d6963726f656c656374726f6e696373311a301806035504030c115354534146452d41313130204556414c323059301306072a8648ce3d020106082a8648ce3d03010703420004f0f949ba8040bb4033cad02ef6784f6490a3b199c0ba9a0f4e3def634af3d505bbb365fe4453975b1257cab900b0436e5a31c27d5ac4ab8fc55337fb5c16e935300a06082a8648ce3d0403020348003045022100d43ce253be5699e1644ffc23dd63dc23289cf67832dfde9e59623df770709b5f02202d50e888c8ba3f0825d735813569c71a9716ed60dbf8d9ff1b9cf6a0ed0d7335
+STSAFE> readCertificate: Store the certificate to Device-Cert.pem
+===== Certificate written to Device-Cert.pem
+===== Load private key via Engine
+stsafe_load_privkey called 
+STSAFE_PKEY> stsafe_load_pubkey_internal called
+STSAFE_PKEY> stsafe_load_pubkey_internal pkey is NULL so allocate new one
+stsafe_pkey_meths called nid=408
+STSAFE_PKEY> stsafe_load_pubkey_internal StSafeA_Read Success CertificateSize = 402
+STSAFE_PKEY> stsafe_load_pubkey_internal returns pkey
+===== privkey of size 1
+stsafe_pkey_meths called nid=408
+stsafe_pkey_ec_init called
+stsafe_pkey_ec_init ctx not NULL 
+stsafe_pkey_is_stsafe_key called
+StSafeA_Read Success CertificateSize = 402
+
+Input key (len = 65):  04 f0 f9 49 ba 80 40 bb 40 33 ca d0 2e f6 78 4f 64 90 a3 b1 99 c0 ba 9a 0f 4e 3d ef 63 4a f3 d5 05 bb b3 65 fe 44 53 97 5b 12 57 ca b9 00 b0 43 6e 5a 31 c2 7d 5a c4 ab 8f c5 53 37 fb 5c 16 e9 35
+
+STSafe key (len = 65):  04 f0 f9 49 ba 80 40 bb 40 33 ca d0 2e f6 78 4f 64 90 a3 b1 99 c0 ba 9a 0f 4e 3d ef 63 4a f3 d5 05 bb b3 65 fe 44 53 97 5b 12 57 ca b9 00 b0 43 6e 5a 31 c2 7d 5a c4 ab 8f c5 53 37 fb 5c 16 e9 35
+stsafe_pkey_is_stsafe_key return =1
+STSAFE_PKEY> stsafe_load_pubkey_internal called
+STSAFE_PKEY> stsafe_load_pubkey_internal pkey NOT NULL.
+STSAFE_PKEY> stsafe_load_pubkey_internal returns pkey
+stsafe_pkey_ec_init returned
+stsafe_pkey_ec_sign_init called
+===== Generate digest
+stsafe_pkey_ec_sign called 
+stsafe_pkey_is_stsafe_key called
+StSafeA_Read Success CertificateSize = 402
+
+Input key (len = 65):  04 f0 f9 49 ba 80 40 bb 40 33 ca d0 2e f6 78 4f 64 90 a3 b1 99 c0 ba 9a 0f 4e 3d ef 63 4a f3 d5 05 bb b3 65 fe 44 53 97 5b 12 57 ca b9 00 b0 43 6e 5a 31 c2 7d 5a c4 ab 8f c5 53 37 fb 5c 16 e9 35
+
+STSafe key (len = 65):  04 f0 f9 49 ba 80 40 bb 40 33 ca d0 2e f6 78 4f 64 90 a3 b1 99 c0 ba 9a 0f 4e 3d ef 63 4a f3 d5 05 bb b3 65 fe 44 53 97 5b 12 57 ca b9 00 b0 43 6e 5a 31 c2 7d 5a c4 ab 8f c5 53 37 fb 5c 16 e9 35
+stsafe_pkey_is_stsafe_key return =1
+stsafe_pkey_ec_sign ---1
+stsafe_pkey_ec_sign ---signlen=256
+stsafe_pkey_ec_sign ---tbslen=32
+stsafe_engine_ecdsa_do_sign digest_len = 32
+StSafeA_GenerateSignature : RLength=32 SLength=32
+
+
+Input Hash size:32 
+6b321c0fe290496095a841962aa986dc4f8520693773d9f1fec295e95747405a
+
+Signature R size:32 
+08544093a7f85396c3e66cfb4ab6de498ba1ca3a3da741ee7591a35aa9ab636a
+Signature S size:32 
+3936eab7fd9e2e976aaff62dd85b2a008a8644b9ea60e7d7ace7255a7a800d93
+
+===== Signing success
+===== Prepare verification
+===== Open Device-Cert.pem file
+===== Read certificate from Device-Cert.pem
+stsafe_engine_ecdsa_do_verify called
+StSafeA_VerifyMessageSignature called, StatusCode:0 SignatureValidity=1
+stsafe ecdsa verfiy end! result 1
+==============================================================
+===== PASS Test 8 STSAFE Private Key Methods             =====
+==============================================================
+
+==============================================================
+===== Test 9 STSAFE Randon Number Generation             =====
+==============================================================
+Stsafe engine random length 5
+
+STSAFE> stsafe_get_random_bytes:  Success Random number = 0xb872fb05f6
+==============================================================
+===== PASS Test 9 STSAFE Randon Number Generation        =====
+==============================================================
+
+==============================================================
+===== Test 10 STSAFE Zone Data Read/update Test          =====
+==============================================================
+ENGINE> stsafe_update_zone: Update Zone function called. 
+READ test : Updated data 100 bytes to Zone 0x6: 
+      be ef 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 
+      10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f 
+      20 21 22 23 24 25 26 27 28 29 2a 2b 2c 2d 2e 2f 
+      30 31 32 33 34 35 36 37 38 39 3a 3b 3c 3d 3e 3f 
+      40 41 42 43 44 45 46 47 48 49 4a 4b 4c 4d 4e 4f 
+      50 51 52 53 54 55 56 57 58 59 5a 5b 5c 5d 5e 5f 
+      60 61 62 63 
+ENGINE> stsafe_update_zone: Update Zone function called. 
+READ test : Updated data 499 bytes to Zone 0x6: 
+      be ef 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 
+      10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f 
+      20 21 22 23 24 25 26 27 28 29 2a 2b 2c 2d 2e 2f 
+      30 31 32 33 34 35 36 37 38 39 3a 3b 3c 3d 3e 3f 
+      40 41 42 43 44 45 46 47 48 49 4a 4b 4c 4d 4e 4f 
+      50 51 52 53 54 55 56 57 58 59 5a 5b 5c 5d 5e 5f 
+      60 61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 
+      70 71 72 73 74 75 76 77 78 79 7a 7b 7c 7d 7e 7f 
+      80 81 82 83 84 85 86 87 88 89 8a 8b 8c 8d 8e 8f 
+      90 91 92 93 94 95 96 97 98 99 9a 9b 9c 9d 9e 9f 
+      a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 aa ab ac ad ae af 
+      b0 b1 b2 b3 b4 b5 b6 b7 b8 b9 ba bb bc bd be bf 
+      c0 c1 c2 c3 c4 c5 c6 c7 c8 c9 ca cb cc cd ce cf 
+      d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 da db dc dd de df 
+      e0 e1 e2 e3 e4 e5 e6 e7 e8 e9 ea eb ec ed ee ef 
+      f0 f1 f2 f3 f4 f5 f6 f7 f8 f9 fa fb fc fd fe ff 
+      00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 
+      10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f 
+      20 21 22 23 24 25 26 27 28 29 2a 2b 2c 2d 2e 2f 
+      30 31 32 33 34 35 36 37 38 39 3a 3b 3c 3d 3e 3f 
+      40 41 42 43 44 45 46 47 48 49 4a 4b 4c 4d 4e 4f 
+      50 51 52 53 54 55 56 57 58 59 5a 5b 5c 5d 5e 5f 
+      60 61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 
+      70 71 72 73 74 75 76 77 78 79 7a 7b 7c 7d 7e 7f 
+      80 81 82 83 84 85 86 87 88 89 8a 8b 8c 8d 8e 8f 
+      90 91 92 93 94 95 96 97 98 99 9a 9b 9c 9d 9e 9f 
+      a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 aa ab ac ad ae af 
+      b0 b1 b2 b3 b4 b5 b6 b7 b8 b9 ba bb bc bd be bf 
+      c0 c1 c2 c3 c4 c5 c6 c7 c8 c9 ca cb cc cd ce cf 
+      d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 da db dc dd de df 
+      e0 e1 e2 e3 e4 e5 e6 e7 e8 e9 ea eb ec ed ee ef 
+      f0 f1 f2 
+ENGINE> stsafe_read_zone: Read Zone function called. 
+READ test : Reading data 100 bytes from Zone 0x6: 
+      be ef 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 
+      10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f 
+      20 21 22 23 24 25 26 27 28 29 2a 2b 2c 2d 2e 2f 
+      30 31 32 33 34 35 36 37 38 39 3a 3b 3c 3d 3e 3f 
+      40 41 42 43 44 45 46 47 48 49 4a 4b 4c 4d 4e 4f 
+      50 51 52 53 54 55 56 57 58 59 5a 5b 5c 5d 5e 5f 
+      60 61 62 63 
+ENGINE> stsafe_read_zone: Read Zone function called. 
+READ test : Reading data 499 bytes from Zone 0x6: 
+      be ef 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 
+      10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f 
+      20 21 22 23 24 25 26 27 28 29 2a 2b 2c 2d 2e 2f 
+      30 31 32 33 34 35 36 37 38 39 3a 3b 3c 3d 3e 3f 
+      40 41 42 43 44 45 46 47 48 49 4a 4b 4c 4d 4e 4f 
+      50 51 52 53 54 55 56 57 58 59 5a 5b 5c 5d 5e 5f 
+      60 61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 
+      70 71 72 73 74 75 76 77 78 79 7a 7b 7c 7d 7e 7f 
+      80 81 82 83 84 85 86 87 88 89 8a 8b 8c 8d 8e 8f 
+      90 91 92 93 94 95 96 97 98 99 9a 9b 9c 9d 9e 9f 
+      a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 aa ab ac ad ae af 
+      b0 b1 b2 b3 b4 b5 b6 b7 b8 b9 ba bb bc bd be bf 
+      c0 c1 c2 c3 c4 c5 c6 c7 c8 c9 ca cb cc cd ce cf 
+      d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 da db dc dd de df 
+      e0 e1 e2 e3 e4 e5 e6 e7 e8 e9 ea eb ec ed ee ef 
+      f0 f1 f2 f3 f4 f5 f6 f7 f8 f9 fa fb fc fd fe ff 
+      00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 
+      10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f 
+      20 21 22 23 24 25 26 27 28 29 2a 2b 2c 2d 2e 2f 
+      30 31 32 33 34 35 36 37 38 39 3a 3b 3c 3d 3e 3f 
+      40 41 42 43 44 45 46 47 48 49 4a 4b 4c 4d 4e 4f 
+      50 51 52 53 54 55 56 57 58 59 5a 5b 5c 5d 5e 5f 
+      60 61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 
+      70 71 72 73 74 75 76 77 78 79 7a 7b 7c 7d 7e 7f 
+      80 81 82 83 84 85 86 87 88 89 8a 8b 8c 8d 8e 8f 
+      90 91 92 93 94 95 96 97 98 99 9a 9b 9c 9d 9e 9f 
+      a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 aa ab ac ad ae af 
+      b0 b1 b2 b3 b4 b5 b6 b7 b8 b9 ba bb bc bd be bf 
+      c0 c1 c2 c3 c4 c5 c6 c7 c8 c9 ca cb cc cd ce cf 
+      d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 da db dc dd de df 
+      e0 e1 e2 e3 e4 e5 e6 e7 e8 e9 ea eb ec ed ee ef 
+      f0 f1 f2 
+ENGINE> stsafe_zone_decrement: Decrement Zone counter function called. 
+READ test : Decrement Zone index 6 counter by 1, now it is: 26
+==============================================================
+===== PASS Test 10 STSAFE Zone Data Read/update Test     =====
+==============================================================
+
+==============================================================
+===== Test 11 STSAFE Query Test                          =====
+==============================================================
+===== Query DataPartition
+stsafe_cmd_ctrl in ACTION!!! cmd = 210
+STSAFE-A1x0 Data Partition Information
+--------------------------------------
+Index                 : 00
+ZoneType              : 00
+ReadAcChangeRight     : 0x00
+ReadAccessCondition   : 0x00
+UpdateAcChangeRight   : 0x00
+UpdateAccessCondition : 0x07
+DataSegmentLength     : 1000 bytes
+Index                 : 01
+ZoneType              : 00
+ReadAcChangeRight     : 0x00
+ReadAccessCondition   : 0x00
+UpdateAcChangeRight   : 0x01
+UpdateAccessCondition : 0x00
+DataSegmentLength     : 0700 bytes
+Index                 : 02
+ZoneType              : 00
+ReadAcChangeRight     : 0x00
+ReadAccessCondition   : 0x00
+UpdateAcChangeRight   : 0x01
+UpdateAccessCondition : 0x00
+DataSegmentLength     : 0600 bytes
+Index                 : 03
+ZoneType              : 00
+ReadAcChangeRight     : 0x00
+ReadAccessCondition   : 0x00
+UpdateAcChangeRight   : 0x01
+UpdateAccessCondition : 0x00
+DataSegmentLength     : 0600 bytes
+Index                 : 04
+ZoneType              : 00
+ReadAcChangeRight     : 0x00
+ReadAccessCondition   : 0x00
+UpdateAcChangeRight   : 0x01
+UpdateAccessCondition : 0x00
+DataSegmentLength     : 1696 bytes
+Index                 : 05
+ZoneType              : 01
+ReadAcChangeRight     : 0x00
+ReadAccessCondition   : 0x00
+UpdateAcChangeRight   : 0x01
+UpdateAccessCondition : 0x00
+DataSegmentLength     : 0064 bytes
+Index                 : 06
+ZoneType              : 01
+ReadAcChangeRight     : 0x00
+ReadAccessCondition   : 0x00
+UpdateAcChangeRight   : 0x01
+UpdateAccessCondition : 0x00
+DataSegmentLength     : 0064 bytes
+Index                 : 07
+ZoneType              : 00
+ReadAcChangeRight     : 0x00
+ReadAccessCondition   : 0x00
+UpdateAcChangeRight   : 0x01
+UpdateAccessCondition : 0x00
+DataSegmentLength     : 1578 bytes
+===== Query ProductData
+stsafe_cmd_ctrl in ACTION!!! cmd = 210
+STSAFE-A110 Product Information
+-------------------------------
+MaskIdentification           : aa4602
+ST Product Number            : a021e021c4e1d00139
+InputOutputBufferSize        : 507
+AtomicityBufferSize          : 64
+NonVolatileMemorySize        : 6376
+TestDate                     : 37649
+InternalProductVersionSize   : 69
+ModuleDate                   : 37713
+FirmwareDeliveryTraceability : 000000
+BlackboxDeliveryTraceability : 000000
+PersoId                      : 000000
+PersoGenerationBatchId       : 000000
+PersoDate                    : 000000
+===== Query I2cParameter
+stsafe_cmd_ctrl in ACTION!!! cmd = 210
+STSAFE-A1x0 I2C Information
+---------------------------
+I2cAddress         : 0x21
+LowPowerModeConfig : 0x04
+LockConfig         : 0x01
+===== Query LifeCycleState
+stsafe_cmd_ctrl in ACTION!!! cmd = 210
+STSAFE-A1x0 Lifecycle Information
+---------------------------------
+LifeCycleStatus    : 0x03
+===== Query HostKeySlot
+stsafe_cmd_ctrl in ACTION!!! cmd = 210
+STSAFE-A1x0 Host Key Slot Information
+-------------------------------------
+HostKeyPresenceFlag        : 0x01
+HostCMacSequenceCounter    : 19
+===== Query LocalEnvelopeKeySlot
+stsafe_cmd_ctrl in ACTION!!! cmd = 210
+STSAFE-A1x0 Local Envelope Key Slot Information
+-----------------------------------------------
+NumberOfSlots    : 2
+SlotNumber       : 0
+PresenceFlag     : 1
+KeyLength        : AES 128 bit
+SlotNumber       : 1
+PresenceFlag     : 1
+KeyLength        : AES 128 bit
+===== Query PublicKeySlot
+stsafe_cmd_ctrl in ACTION!!! cmd = 210
+STSAFE> queryPublicKeySlot: Function not supported at this time
+===== Query CommandAuthorizationConfiguration
+stsafe_cmd_ctrl in ACTION!!! cmd = 210
+STSAFE-A1x0 Command Authorization Information
+---------------------------------------------
+ChangeRight                      : 0x00
+CommandAuthorizationRecordNumber : 9
+Record                           : 0
+CommandCode                      : 0x08
+CommandAC                        : 0x00
+HostEncryptionFlags              : 0x00
+Record                           : 1
+CommandCode                      : 0x09
+CommandAC                        : 0x00
+HostEncryptionFlags              : 0x00
+Record                           : 2
+CommandCode                      : 0x0a
+CommandAC                        : 0x00
+HostEncryptionFlags              : 0x00
+Record                           : 3
+CommandCode                      : 0x0e
+CommandAC                        : 0x03
+HostEncryptionFlags              : 0x02
+Record                           : 4
+CommandCode                      : 0x0f
+CommandAC                        : 0x03
+HostEncryptionFlags              : 0x01
+Record                           : 5
+CommandCode                      : 0x16
+CommandAC                        : 0x01
+HostEncryptionFlags              : 0x00
+Record                           : 6
+CommandCode                      : 0x18
+CommandAC                        : 0x01
+HostEncryptionFlags              : 0x00
+Record                           : 7
+CommandCode                      : 0x1b
+CommandAC                        : 0x00
+HostEncryptionFlags              : 0x00
+Record                           : 8
+CommandCode                      : 0x1c
+CommandAC                        : 0x00
+HostEncryptionFlags              : 0x00
+==============================================================
+===== PASS Test 11 STSAFE Query Test                     =====
+==============================================================
+
+==============================================================
+===== Test 12 STSAFE ECHO Test                           =====
+==============================================================
+stsafe_cmd_ctrl in ACTION!!! cmd = 207
+ENGINE> stsafe_cmd_ctrl: send the string to STSAFE A110 and send back the response from the chip.
+ENGINE> stsafe_cmd_ctrl: Echoed string len 14 content is: Pinging STSafe
+ECHO CMD returns Pinging STSafe. Originally sent Pinging STSafe
+==============================================================
+===== PASS Test 12 STSAFE ECHO Test                      =====
+==============================================================
+
+==============================================================
+===== Test 13 Verify Password Test                       =====
+==============================================================
+stsafe_cmd_ctrl in ACTION!!! cmd = 209
+ENGINE> stsafe_cmd_ctrl: verify the password and return with status + remaining retries count within the same string.
+stsafe_password_verification called.
+Result of veryfy password: length = 0, status = e0, remaining count = 249
+Verify Password CMD returns status 0xe0. Retry count = 249, Originally sent password Banana101
+==============================================================
+===== PASS Test 13 Verify Password Test                  =====
+==============================================================
+
+==============================================================
+===== Test 14 Reset Test                                 =====
+==============================================================
+stsafe_cmd_ctrl in ACTION!!! cmd = 206
+ENGINE> stsafe_cmd_ctrl: Reseting STSAFE hardware to default state, and then re-init the driver.
+Using Openssl     : OpenSSL 1.1.1g  21 Apr 2020
+STSAFE-A110 StSafeA_CreateHandle = 5, pStSafeA->InOutBuffer = 0, pStSafeA->InOutBuffer.LV.Data = 0
+StSafeA_GetDataBufferSize(): 523
+About to call StSafeA_LocalEnvelopeKeySlotQuery: 36ab00, 3682e8, 3664d8 
+StSafeA_LocalEnvelopeKeySlotQuery: 0 slot 0: presence flag =1 
+StSafeA_LocalEnvelopeKeySlotQuery: 0 slot 1: presence flag =1 
+---HostKeySlot = 76b43ae0, pStSafeA->InOutBuffer.LV.Data = 76c78434
+HostKeySlot->HostKeyPresenceFlag: 1 
+Main : stsafe_pairing success 
+
+************^^^^^^^^^^^^*************** 
+Setting STSAFE-A110 host keys
+
+************vvvvvvvvvvvv*************** 
+==============================================================
+===== PASS Test 14 Reset Test                            =====
+==============================================================
+
+==============================================================
+===== Test 15 Hibernate Test                             =====
+==============================================================
+stsafe_cmd_ctrl in ACTION!!! cmd = 208
+ENGINE> stsafe_cmd_ctrl: Put the STSAFE in Hibernate state, wakeup mode 1.
+==============================================================
+===== PASS Test 15 Hibernate Test                        =====
+==============================================================
+
+==============================================================
+===== END OF TEST!!!!                                    =====
+==============================================================
+
