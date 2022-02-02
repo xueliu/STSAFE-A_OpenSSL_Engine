@@ -22,6 +22,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+find_package(OpenSSL)
+
 # when building, don't use the install RPATH already
 # (but later on when installing)
 SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
@@ -66,3 +68,6 @@ target_compile_options(
         -DSTSAFE_A110
         -DBUS_CONF_DEBUG
 )
+
+# Include examples
+add_subdirectory(Examples)
