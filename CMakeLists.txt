@@ -32,6 +32,8 @@ if (NOT (${CMAKE_INSTALL_PREFIX} STREQUAL "/usr" ) )
 endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(BUILD_SHARED_LIBS ON)
+
 
 # Include core-modules
 include(lib/STSAFE_Axx0/CMakeLists.txt)
