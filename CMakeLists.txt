@@ -38,10 +38,11 @@ set(BUILD_SHARED_LIBS ON)
 # Include core-modules
 include(lib/STSAFE_Axx0/CMakeLists.txt)
 
-add_library(stsafe "")
+add_library(Stsafe "")
+set_target_properties(Stsafe PROPERTIES PREFIX "")
 
 target_sources(
-        stsafe
+        Stsafe
         PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src/engine_init.c
         ${CMAKE_CURRENT_LIST_DIR}/src/stsafe_cipher.c
@@ -58,14 +59,14 @@ target_sources(
 )
 
 target_include_directories(
-        stsafe
+        Stsafe
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/inc>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/lib/STSAFE_Axx0/CoreModules/Inc>
 )
 
 target_compile_options(
-        stsafe
+        Stsafe
         PUBLIC
         -DSTSAFE_A110
         -DBUS_CONF_DEBUG

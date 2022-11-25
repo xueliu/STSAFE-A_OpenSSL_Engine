@@ -8,7 +8,7 @@ target_sources(
 
 target_link_libraries(
         stsafe_genkey
-        stsafe
+        Stsafe
         OpenSSL::SSL
         OpenSSL::Crypto
 )
