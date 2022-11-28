@@ -22,7 +22,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-find_package(OpenSSL)
+find_package(OpenSSL REQUIRED)
+find_package(PkgConfig REQUIRED)
+
+# -- Get the OpenSSL's engine directory
+if(OPENSSL_FOUND AND PKG_CONFIG_FOUND)
+    pkg_get_variable(OPENSSL_ENGINE_DIR libcrypto enginesdir)
+endif()
+
+message(STATUS "OpenSSL Engine: " ${OPENSSL_ENGINE_DIR} )
 
 # when building, don't use the install RPATH already
 # (but later on when installing)
