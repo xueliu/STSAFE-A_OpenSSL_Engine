@@ -1,1 +1,3 @@
 add_subdirectory(stsafe_genkey)
+
+add_subdirectory(stsafe_engine_test_suite)
