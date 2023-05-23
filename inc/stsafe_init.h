@@ -76,7 +76,7 @@
 #else
   #include "stsafea_types.h"
 #endif /* STSAFE_A_TYPES_H_FILE */
-
+#include "engine_debug.h"
 /* OpenSSL return types don't seem to have a define but since they are counter
     to the convention of cryptoauthlib they are defined here */
 #define ENGINE_OPENSSL_SUCCESS                  (1)
@@ -91,8 +91,21 @@ extern StSafeA_Handle_t      stsafea_handle;
 extern const ENGINE_CMD_DEFN stsafe_cmd_defns[];
 extern RAND_METHOD stsafe_random_method;
 
-int32_t StSafeA_HostKeys_Program(void);
 
+typedef enum
+{
+STSAFEA_DECRYPT = 0,
+STSAFEA_DERIVE,
+STSAFEA_ENCRYPT,
+STSAFEA_ESTABLISH,
+STSAFEA_GEN_MAC,
+STSAFEA_GEN_SIG,
+STSAFEA_UNWRAP,
+STSAFEA_WRAP,
+STSAFEA_VER_MAC,
+STSAFEA_MAX_CMD
+} StSafeA_Cmd_Tag_t;
+int32_t get_cmd_auth_enc(uint8_t cmd, uint8_t *mac, uint8_t *enc);
 #endif /* STSAFE_INIT_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

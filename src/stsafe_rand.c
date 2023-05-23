@@ -73,7 +73,7 @@
 #include "stsafea_conf.h"
 #include "stsafea_service.h"
 #include "stsafe_init.h"
-
+#include "engine_debug.h"
 
 int stsafe_random_status(void)
 {
@@ -91,14 +91,14 @@ int stsafe_get_random_bytes(unsigned char *buffer, int num)
 
     memset(opensslerrbuff, 0x00, 1024 * sizeof(char));
 
-    printf("Stsafe engine random length %d\n", num);
+    DEBUG_PRINTF("Stsafe engine random length %d\n", num);
 
     Response.Data = (uint8_t *) OPENSSL_malloc(STSAFEA_BUFFER_MAX_SIZE * sizeof(uint8_t));
     if(Response.Data == NULL) {
         opensslerr = ERR_get_error();
-        printf("STSAFE> %s: OPENSSL_malloc failed\n", __func__);
+        DEBUG_PRINTF("STSAFE> %s: OPENSSL_malloc failed\n", __func__);
         if (ERR_error_string(opensslerr, opensslerrbuff) != NULL) {
-            printf("STSAFE> %s: OpenSSL error %ld %s\n", __func__, opensslerr, opensslerrbuff);
+            DEBUG_PRINTF("STSAFE> %s: OpenSSL error %ld %s\n", __func__, opensslerr, opensslerrbuff);
         }
         StatusCode = STSAFEA_INVALID_PARAMETER;
     }
@@ -108,11 +108,11 @@ int stsafe_get_random_bytes(unsigned char *buffer, int num)
 
         StatusCode = StSafeA_GenerateRandom(pStSafeA, STSAFEA_EPHEMERAL_RND, num, &Response, STSAFEA_MAC_NONE);
         if(StatusCode == 0) {
-            printf("\nSTSAFE> %s:  Success Random number = 0x", __func__);
+            DEBUG_PRINTF("\nSTSAFE> %s:  Success Random number = 0x", __func__);
             for(int i = 0; i < num; i++) {
-                printf("%02x",*((Response.Data)+i));
+                DEBUG_PRINTF("%02x",*((Response.Data)+i));
             }
-            printf("\n");
+            DEBUG_PRINTF("\n");
             memcpy(buffer, Response.Data, num);
         }
         OPENSSL_free(Response.Data);

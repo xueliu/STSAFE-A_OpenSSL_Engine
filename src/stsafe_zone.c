@@ -94,7 +94,7 @@ int stsafe_read_zone(int zone_index, int offset, int length, unsigned char *data
     StSafeA_LVBuffer_t Data_LV;
     int32_t StatusCode = 0;
     
-    fprintf(stdout, "ENGINE> %s: Read Zone function called. \n", __func__);
+    DEBUG_FPRINTF(stdout, "ENGINE> %s: Read Zone function called. \n", __func__);
     
     if((length == 0) || (data_buff == NULL))
     {
@@ -127,7 +127,7 @@ int stsafe_update_zone(int zone_index, int offset, int length, unsigned char *da
     StSafeA_LVBuffer_t Data_LV;
     int32_t StatusCode = 0;
     
-    fprintf(stdout, "ENGINE> %s: Update Zone function called. \n", __func__);
+    DEBUG_FPRINTF(stdout, "ENGINE> %s: Update Zone function called. \n", __func__);
     
     if((length == 0) || (data_buff == NULL))
     {
@@ -161,7 +161,7 @@ int stsafe_zone_decrement(int zone_index, int offset, int amount, unsigned char 
     StSafeA_DecrementBuffer_t OutDecrement;
     int32_t StatusCode = 0;
     
-    fprintf(stdout, "ENGINE> %s: Decrement Zone counter function called. \n", __func__);
+    DEBUG_FPRINTF(stdout, "ENGINE> %s: Decrement Zone counter function called. \n", __func__);
     
     if((amount == 0) || (indata_buffer == NULL) || (outcounter == NULL))
     {
@@ -176,6 +176,152 @@ int stsafe_zone_decrement(int zone_index, int offset, int amount, unsigned char 
     *outcounter = OutDecrement.OneWayCounter;
     
     return (StatusCode == STSAFEA_OK) ? 0 : 1;
+}
+
+
+#define MAX_READ_UPDATE_CONTENT (STSAFEA_BUFFER_DATA_CONTENT_SIZE - 4)
+
+int32_t stsafe_read_certificate(uint8_t zone, uint8_t **buffer, size_t *size)
+{
+	StSafeA_Handle_t *pStSafeA = &stsafea_handle;
+	StSafeA_LVBuffer_t stsRead;
+	char     opensslerrbuff[1024];
+
+	long int  opensslerr      = 0;
+	uint16_t  certificateSize = 0;
+	uint8_t  *certRawStart    = NULL;
+	uint8_t  *certRawCurr     = NULL;
+	int32_t   StatusCode      = STSAFEA_OK;
+	uint32_t  numBytesRead    = 0;
+	uint32_t  offsetBytes     = 0;
+	uint32_t  numReads        = 0;
+	uint32_t  finalBytes      = 0;
+
+	if (buffer == NULL || size == NULL)
+		return STSAFEA_INVALID_PARAMETER;
+	*buffer = NULL;
+	*size = 0;
+	memset(opensslerrbuff, 0x00, 1024 * sizeof(char));
+	memset(&stsRead, 0x00, sizeof(StSafeA_LVBuffer_t));
+	DEBUG_FPRINTF(stdout, "STSAFE> %s: OPENSSL_malloc size is %zd bytes\n", __func__, MAX_READ_UPDATE_CONTENT * sizeof(uint8_t));
+	stsRead.Data = OPENSSL_malloc(MAX_READ_UPDATE_CONTENT);
+  stsRead.Length = MAX_READ_UPDATE_CONTENT;
+	if(stsRead.Data == NULL) {
+		opensslerr = ERR_get_error();
+		DEBUG_FPRINTF(stderr, "STSAFE> %s: OPENSSL_malloc failed\n", __func__);
+		if (ERR_error_string(opensslerr, opensslerrbuff) != NULL) {
+			DEBUG_FPRINTF(stderr, "STSAFE> %s: OpenSSL error %ld %s\n", __func__, opensslerr, opensslerrbuff);
+		}
+		StatusCode = STSAFEA_INVALID_PARAMETER;
+	}
+
+	if (StatusCode == STSAFEA_OK) {
+		stsRead.Length = STSAFEA_BUFFER_MAX_SIZE;
+
+		StatusCode = StSafeA_Read(pStSafeA,
+				0,
+				0,
+				STSAFEA_AC_ALWAYS,
+				zone,
+				0,
+				4,
+				4,
+				&stsRead,
+				STSAFEA_MAC_NONE);
+
+		if ((StatusCode == 0) && (stsRead.Data != NULL)) {
+			switch (stsRead.Data[1])
+			{
+				case 0x81:
+					certificateSize = stsRead.Data[2] + 3;
+					break;
+
+				case 0x82:
+					certificateSize = (((uint16_t)stsRead.Data[2]) << 8) + stsRead.Data[3] + 4;
+					break;
+
+				default:
+					if (stsRead.Data[1] < 0x81){
+						certificateSize = stsRead.Data[1];
+					}
+					break;
+			}
+		}
+	}
+
+	if (StatusCode == STSAFEA_OK) {
+		/* allocate memory for whole certificate */
+		certRawStart = OPENSSL_malloc(certificateSize * sizeof(uint8_t));
+		if (certRawStart == NULL) {
+			opensslerr = ERR_get_error();
+			DEBUG_FPRINTF(stderr, "STSAFE> %s: OPENSSL_malloc failed\n", __func__);
+			if (ERR_error_string(opensslerr, opensslerrbuff) != NULL) {
+				DEBUG_FPRINTF(stderr, "STSAFE> %s: OpenSSL error %ld %s\n", __func__, opensslerr, opensslerrbuff);
+			}
+			StatusCode = STSAFEA_INVALID_PARAMETER;
+		}
+	}
+
+	if (StatusCode == STSAFEA_OK) {
+		/* calculate number of I2C read needed */
+
+		numReads   = certificateSize/MAX_READ_UPDATE_CONTENT;
+		finalBytes = certificateSize - (numReads * MAX_READ_UPDATE_CONTENT);
+		if (finalBytes) {
+			numReads++;
+		}
+		numBytesRead = MAX_READ_UPDATE_CONTENT;
+		certRawCurr  = certRawStart;
+
+		DEBUG_FPRINTF(stdout, "STSAFE> %s: certificateSize %d numWrites %d finalBytes %d\n",
+				__func__, certificateSize, numReads, finalBytes);
+
+		for (uint32_t readNum = 0; readNum < numReads; readNum++) {
+			if ( (readNum + 1) == numReads) {
+				numBytesRead = finalBytes;
+			}
+
+			StatusCode = StSafeA_Read(pStSafeA,
+					0,
+					0,
+					STSAFEA_AC_ALWAYS,
+					zone,
+					offsetBytes,
+					numBytesRead,
+					numBytesRead,
+					&stsRead,
+					STSAFEA_MAC_NONE);
+
+			if (StatusCode == STSAFEA_OK) {
+				DEBUG_FPRINTF(stdout, "STSAFE> %s: Read number %02d numBytesRead: %d\n",
+						__func__, readNum, numBytesRead);
+				DEBUG_FPRINTF(stdout, "STSAFE> %s: Chunk data                 : ", __func__);
+				for(uint32_t i = 0; i < numBytesRead; i++) {
+					DEBUG_FPRINTF(stdout, "%02x",stsRead.Data[i]);
+				}
+				DEBUG_FPRINTF(stdout, "\n");
+
+				/* data to temp store */
+				DEBUG_FPRINTF(stdout, "Copying %d bytes to %p\n", numBytesRead, certRawCurr);
+				memcpy(certRawCurr, stsRead.Data, numBytesRead);
+				certRawCurr = certRawCurr + numBytesRead;
+				offsetBytes = offsetBytes + numBytesRead;
+			} else {
+				readNum   = numReads;
+				OPENSSL_free(certRawStart);
+				StatusCode = STSAFEA_INVALID_PARAMETER;
+			}
+		}
+		if (StatusCode == STSAFEA_OK)
+		{
+			*buffer = certRawStart;
+			*size = certificateSize;
+		}
+	}
+
+	if (stsRead.Data != NULL)
+		OPENSSL_free(stsRead.Data);
+	return StatusCode;
 }
 
 

@@ -80,12 +80,29 @@
 #include "openssl/pem.h"
 #include "openssl/opensslv.h"
 #include "openssl/x509.h"
+#include "engine_debug.h"
 
 /* OpenSSL return types don't seem to have a define but since they are counter
     to the convention of cryptoauthlib they are defined here */
 #define ENGINE_OPENSSL_SUCCESS                  (1)
 #define ENGINE_OPENSSL_FAILURE                  (0)
 #define ENGINE_OPENSSL_ERROR                    (-1)
+
+typedef struct
+{
+  uint32_t magic;
+  long slot;
+  uint8_t serial[9];
+  long tag;
+} stsafe_ecc_ex_data_t;
+
+#define STSAFE_ECC_APP_DATA_MAGIC 0xBBFAE0BB
+
+int stsafe_ecc_setappdata(EC_KEY *key, stsafe_ecc_ex_data_t *data);
+stsafe_ecc_ex_data_t *stsafe_ecc_getappdata(EC_KEY *key);
+int stsafe_key_write(const EC_KEY *key, const char *filename);
+EVP_PKEY *stsafe_key_read(const char *filename);
+
 
 /* The CMD number for the Ctrl function */
 typedef enum {
@@ -100,6 +117,7 @@ typedef enum {
     STSAFE_CMD_HIBERNATE,
     STSAFE_CMD_VERIFYPASSWORD,
     STSAFE_CMD_QUERY,
+    STSAFE_CMD_GET_SERIAL_NUMBER,
     STSAFE_CMD_MAX
 } STSAFE_CMD_LIST;
 
@@ -123,7 +141,15 @@ void ENGINE_load_stsafe(void);
   * retval   0 if success. An error code otherwise.
  *   
  */
-int stsafe_init(ENGINE *e);
+int stsafe_init(struct engine_st *ctx);
+
+/** 
+ * name:    get STSAFE-A serial number 
+ *
+ * param    None
+ * retval   uint8_t pointer to serial number.
+ */
+uint8_t *stsafe_get_serial(void);
 
 /** 
  * name:    Reset the StSafe and call the initialization 
@@ -152,6 +178,8 @@ int stsafe_hibernate(int wakeupcode);
   * retval  0 if success, 1 otherwise.
   */
 uint32_t stsafe_password_verification(const uint8_t *pInPassword, uint8_t *response);
+
+int32_t stsafe_read_certificate(uint8_t zone, uint8_t **buffer, size_t *size);
 
 
 /**
@@ -184,6 +212,8 @@ int stsafe_cmd_ctrl(ENGINE *e, int cmd, long i, void *p, void(*f)(void));
 /* Set of PKEY API functions */
 EVP_PKEY* stsafe_load_pubkey(ENGINE *, const char *, UI_METHOD *, void *);
 EVP_PKEY* stsafe_load_privkey(ENGINE *e, const char *key_id, UI_METHOD *ui_method, void *callback_data);
+int stsafe_ssl_client_cert(ENGINE *e, SSL *ssl, STACK_OF(X509_NAME) *ca_dn, X509 **pcert, EVP_PKEY **pkey, STACK_OF(X509) **pother, UI_METHOD *ui_method, void *callback_data);
+
 int stsafe_pkey_meths(ENGINE *e, EVP_PKEY_METHOD **pkey_meth, const int **nids, int nid);
 int stsafe_pkey_meth_init(void);
 
@@ -222,6 +252,7 @@ int stsafe_AES_unwrap_key(unsigned char keyslot, unsigned char *out, const unsig
 
 /* ECDSA functions */
 EC_KEY_METHOD *stsafe_get_EC_methods(void);
+void stsafe_release_EC_methods(void);
 
 ECDSA_SIG *stsafe_engine_ecdsa_do_sign (const unsigned char *dgst, int dgst_len,
                                         const BIGNUM *kinv, const BIGNUM *rp,

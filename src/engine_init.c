@@ -82,18 +82,32 @@
 #include "stsafe_init.h"
 #include "stsafe_api.h"
 #include "stsafe_a_configuration.h"
+#include "config.h"
+
+int debug_level = DEBUG_LEVEL;
 
 #define STSAFE_ENGINE_PKEY_SUPPORT 1
 
+
+#define STSAFEA_ENGINE_VERSION " " PACKAGE_VERSION
+//#define DEBUG_FPRINTF(fd, fmt, ...) { if (fd != stdout) DEBUG_FPRINTF(fd, fmt __VA_OPT__(,) __VA_ARGS__);}
+
+
+#define xstr(s) str(s)
+#define str(s) #s
 /**
  * @brief engine_stsafe_id
  */
+#ifdef STSAFEA_DEVICE_ADDRESS
+static const char *engine_stsafe_id = "Stsafe_" xstr(STSAFEA_DEVICE_ADDRESS);
+static const char *engine_stsafe_name = "STSAFE-A110 engine" STSAFEA_ENGINE_VERSION " " xstr(STSAFEA_DEVICE_ADDRESS);
+#else
 static const char *engine_stsafe_id = "Stsafe";
-
+static const char *engine_stsafe_name = "STSAFE-A110 engine" STSAFEA_ENGINE_VERSION;
+#endif
 /**
  * @brief engine_stsafe_name
  */
-static const char *engine_stsafe_name = "STSAFE-A110 engine for OpenSSL";
 
 /**
  * @brief stsafe_slot
@@ -106,7 +120,7 @@ static int engine_finish(ENGINE *e)
 {
 
     (void)e;
-    
+    stsafe_release_EC_methods();    
     return 1;
 
 }
@@ -125,98 +139,105 @@ bind_helper(ENGINE *e, const char *id)
 {
     int ret = 0;
 
-    fprintf(stdout, "ENGINE> %s: Engine id = %s\n", __func__, id);
+    DEBUG_FPRINTF(stdout, "ENGINE> %s: Engine id = %s [%s]\n", __func__, id, engine_stsafe_id);
     if (id && (strcmp(id, engine_stsafe_id) != 0)) {
-        fprintf(stderr, "ENGINE> %s: Engine id lookup failed\n", __func__);
+        DEBUG_FPRINTF(stderr, "ENGINE> %s: Engine id lookup failed\n", __func__);
         return ENGINE_OPENSSL_FAILURE;
     }
 
 
     if (!ENGINE_set_id(e, engine_stsafe_id)) {
-        fprintf(stderr, "ENGINE> %s: ENGINE_set_id failed\n", __func__);
+        DEBUG_FPRINTF(stderr, "ENGINE> %s: ENGINE_set_id failed\n", __func__);
         goto end;
     }
-    fprintf(stdout, "ENGINE> %s: ENGINE_set_id completed\n", __func__);
+    DEBUG_FPRINTF(stdout, "ENGINE> %s: ENGINE_set_id completed\n", __func__);
 
     if (!ENGINE_set_name(e, engine_stsafe_name)) {
-        fprintf(stderr, "ENGINE> %s: ENGINE_set_name failed\n", __func__);
+        DEBUG_FPRINTF(stderr, "ENGINE> %s: ENGINE_set_name failed\n", __func__);
         goto end;
     }
-    fprintf(stdout, "ENGINE> %s: ENGINE_set_name completed\n", __func__);
+    DEBUG_FPRINTF(stdout, "ENGINE> %s: ENGINE_set_name completed\n", __func__);
 
     if (!ENGINE_set_init_function(e, stsafe_init)){
-        fprintf(stderr, "ENGINE> %s: ENGINE_set_init_function failed\n", __func__);
+        DEBUG_FPRINTF(stderr, "ENGINE> %s: ENGINE_set_init_function failed\n", __func__);
         goto end;
     }
-    fprintf(stdout, "ENGINE> %s: ENGINE_set_init_function completed\n", __func__);
+    DEBUG_FPRINTF(stdout, "ENGINE> %s: ENGINE_set_init_function completed\n", __func__);
 
     if (!ENGINE_set_RAND(e, &stsafe_random_method)){
-        fprintf(stderr, "ENGINE> %s: ENGINE_set_RAND failed\n", __func__);
+        DEBUG_FPRINTF(stderr, "ENGINE> %s: ENGINE_set_RAND failed\n", __func__);
         goto end;
     }
-    fprintf(stdout, "ENGINE> %s: ENGINE_set_RAND completed\n", __func__);
+    DEBUG_FPRINTF(stdout, "ENGINE> %s: ENGINE_set_RAND completed\n", __func__);
 
     if (!ENGINE_set_ctrl_function(e, stsafe_cmd_ctrl)){
-        fprintf(stderr, "ENGINE> %s: ENGINE_set_ctrl_function failed\n", __func__);
+        DEBUG_FPRINTF(stderr, "ENGINE> %s: ENGINE_set_ctrl_function failed\n", __func__);
         goto end;
     }
-    fprintf(stdout, "ENGINE> %s: ENGINE_set_ctrl_function completed\n", __func__);
+    DEBUG_FPRINTF(stdout, "ENGINE> %s: ENGINE_set_ctrl_function completed\n", __func__);
 
     if (!ENGINE_set_cmd_defns(e, stsafe_cmd_defns)){
-        fprintf(stderr, "ENGINE> %s: ENGINE_set_cmd_defns failed\n", __func__);
+        DEBUG_FPRINTF(stderr, "ENGINE> %s: ENGINE_set_cmd_defns failed\n", __func__);
         goto end;
     }
-    fprintf(stdout, "ENGINE> %s: ENGINE_set_cmd_defns completed\n", __func__);
+    DEBUG_FPRINTF(stdout, "ENGINE> %s: ENGINE_set_cmd_defns completed\n", __func__);
 
     if (!ENGINE_set_EC(e, stsafe_get_EC_methods())){
-        fprintf(stderr, "ENGINE> %s: ENGINE_set_EC failed\n", __func__);
+        DEBUG_FPRINTF(stderr, "ENGINE> %s: ENGINE_set_EC failed\n", __func__);
         goto end;
     }
-    fprintf(stdout, "ENGINE> %s: ENGINE_set_EC completed\n", __func__);
+    DEBUG_FPRINTF(stdout, "ENGINE> %s: ENGINE_set_EC completed\n", __func__);
 
 #if STSAFE_ENGINE_PKEY_SUPPORT
     if (!ENGINE_set_load_pubkey_function(e, stsafe_load_pubkey)){
-        fprintf(stderr, "ENGINE> %s: ENGINE_set_load_pubkey_function failed\n", __func__);
+        DEBUG_FPRINTF(stderr, "ENGINE> %s: ENGINE_set_load_pubkey_function failed\n", __func__);
         goto end;
     }
-    fprintf(stdout, "ENGINE> %s: ENGINE_set_load_pubkey_function completed\n", __func__);
-
+    DEBUG_FPRINTF(stdout, "ENGINE> %s: ENGINE_set_load_pubkey_function completed\n", __func__);
+#if 1
+    if (!ENGINE_set_load_ssl_client_cert_function(e, stsafe_ssl_client_cert)){
+        DEBUG_FPRINTF(stderr, "ENGINE> %s: ENGINE_set_load_ssl_client_cert_function failed\n", __func__);
+        goto end;
+    }
+    DEBUG_FPRINTF(stdout, "ENGINE> %s: ENGINE_set_load_ssl_client_cert_function completed\n", __func__);
+#endif
     if (!ENGINE_set_load_privkey_function(e, stsafe_load_privkey)){
-        fprintf(stderr, "ENGINE> %s: ENGINE_set_load_privkey_function failed\n", __func__);
+        DEBUG_FPRINTF(stderr, "ENGINE> %s: ENGINE_set_load_privkey_function failed\n", __func__);
         goto end;
     }
-    fprintf(stdout, "ENGINE> %s: ENGINE_set_load_privkey_function completed\n", __func__);
+    DEBUG_FPRINTF(stdout, "ENGINE> %s: ENGINE_set_load_privkey_function completed\n", __func__);
 
     if(!stsafe_pkey_meth_init()){
-        fprintf(stderr, "ENGINE> %s: stsafe_pkey_meth_init failed\n", __func__);
+        DEBUG_FPRINTF(stderr, "ENGINE> %s: stsafe_pkey_meth_init failed\n", __func__);
         goto end;
     }
-    fprintf(stdout, "ENGINE> %s: stsafe_pkey_meth_init completed\n", __func__);
+    DEBUG_FPRINTF(stdout, "ENGINE> %s: stsafe_pkey_meth_init completed\n", __func__);
 
     if (! ENGINE_set_pkey_meths(e, stsafe_pkey_meths)){
-        fprintf(stderr, "ENGINE> %s: ENGINE_set_pkey_meths failed\n", __func__);
+        DEBUG_FPRINTF(stderr, "ENGINE> %s: ENGINE_set_pkey_meths failed\n", __func__);
         goto end;
     }
-    fprintf(stdout, "ENGINE> %s: ENGINE_set_pkey_meths completed\n", __func__);
+    DEBUG_FPRINTF(stdout, "ENGINE> %s: ENGINE_set_pkey_meths completed\n", __func__);
 
 #endif 
 
-    fprintf(stdout, "ENGINE> %s: calling Engine_set_finish_function\n", __func__);
+    DEBUG_FPRINTF(stdout, "ENGINE> %s: calling Engine_set_finish_function\n", __func__);
     if (!ENGINE_set_finish_function(e, engine_finish)) {
-        fprintf(stderr, "ENGINE> %s: ENGINE_set_finish_function failed\n", __func__);
+        DEBUG_FPRINTF(stderr, "ENGINE> %s: ENGINE_set_finish_function failed\n", __func__);
         goto end;
     }
-    fprintf(stdout, "ENGINE> %s: ENGINE_set_finish_function completed\n", __func__);
+    DEBUG_FPRINTF(stdout, "ENGINE> %s: ENGINE_set_finish_function completed\n", __func__);
 
-    fprintf(stdout, "ENGINE> %s: calling ENGINE_set_default\n", __func__);
+#if 0
+    DEBUG_FPRINTF(stdout, "ENGINE> %s: calling ENGINE_set_default\n", __func__);
     if (!ENGINE_set_default(e, (ENGINE_METHOD_DH | ENGINE_METHOD_RAND | ENGINE_METHOD_CIPHERS |
                                 ENGINE_METHOD_DIGESTS | ENGINE_METHOD_PKEY_METHS |
                                 ENGINE_METHOD_EC) )) {
-        fprintf(stderr, "ENGINE> %s: ENGINE_set_default failed\n", __func__);
+        DEBUG_FPRINTF(stderr, "ENGINE> %s: ENGINE_set_default failed\n", __func__);
         goto end;
     }
-    fprintf(stdout, "ENGINE> %s: ENGINE_set_default completed\n", __func__);
-
+    DEBUG_FPRINTF(stdout, "ENGINE> %s: ENGINE_set_default completed\n", __func__);
+#endif
     ret = 1;
 end:
     return ret;
@@ -227,32 +248,32 @@ IMPLEMENT_DYNAMIC_CHECK_FN()
 
 static ENGINE* ENGINE_stsafe(void)
 {
-    fprintf(stdout, "ENGINE> %s:\n", __func__);
+    DEBUG_FPRINTF(stdout, "ENGINE> %s:\n", __func__);
     ENGINE *eng = ENGINE_new();
 
     if (!eng) {
         return NULL;
     }
-    fprintf(stdout, "Before calling bind_helper.");
+    DEBUG_FPRINTF(stdout, "Before calling bind_helper.");
     if (!bind_helper(eng, engine_stsafe_id)) {
         
-        fprintf(stdout, "After failed calling bind_helper.");
+        DEBUG_FPRINTF(stdout, "After failed calling bind_helper.");
         
         ENGINE_free(eng);
         return NULL;
     }
 
-    fprintf(stdout, "After calling bind_helper.");
+    DEBUG_FPRINTF(stdout, "After calling bind_helper.");
 
     return eng;
 }
 
 void ENGINE_load_stsafe(void)
 {
-    fprintf(stdout, "ENGINE> %s:\n", __func__);
+    DEBUG_FPRINTF(stdout, "ENGINE> %s:\n", __func__);
     ENGINE *toadd = ENGINE_stsafe();
     if (!toadd) {
-        fprintf(stderr, "STSAFE> %s: Engine failed to load\n", __func__);
+        DEBUG_FPRINTF(stderr, "STSAFE> %s: Engine failed to load\n", __func__);
         return;
     }
     ENGINE_add(toadd);

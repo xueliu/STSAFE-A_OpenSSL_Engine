@@ -99,7 +99,7 @@ uint32_t stsafe_password_verification(const uint8_t *pInPassword, uint8_t *respo
 {
     
     StSafeA_Handle_t *pStSafeA = &stsafea_handle;
-    printf("stsafe_password_verification called.\n");
+    DEBUG_PRINTF_API("stsafe_password_verification called.\n");
     int32_t StatusCode = 0;
     StSafeA_VerifyPasswordBuffer_t OutVerifyPassword;
     
@@ -108,7 +108,7 @@ uint32_t stsafe_password_verification(const uint8_t *pInPassword, uint8_t *respo
     /* Verify signature */
     if (StatusCode == 0)
     {
-        printf("Result of veryfy password: length = %d, status = %x, remaining count = %d\n", 
+        DEBUG_PRINTF_API("Result of veryfy password: length = %d, status = %x, remaining count = %d\n", 
                 OutVerifyPassword.Length, OutVerifyPassword.VerificationStatus, OutVerifyPassword.RemainingTries);
         
         response[0] = OutVerifyPassword.VerificationStatus;
@@ -141,22 +141,19 @@ int stsafe_AES_wrap_key(unsigned char keyslot, unsigned char *out, const unsigne
 {
 
     StSafeA_Handle_t *pStSafeA = &stsafea_handle;
-    printf("stsafe_AES_wrap_key called.\n");
+    DEBUG_PRINTF_API("stsafe_AES_wrap_key called.\n");
     int32_t StatusCode = 0;
     StSafeA_LVBuffer_t LV_response;
     
     if(!in || !out || inlen == 0)
     {
-        printf("%s Invalid parameter!\n", __func__);
+        DEBUG_PRINTF_ERROR("%s Invalid parameter!\n", __func__);
         return 1;
     }
 
     LV_response.Data = out;
-    
-    StatusCode = StSafeA_WrapLocalEnvelope(pStSafeA, keyslot,(uint8_t*) in, inlen, &LV_response,
+    StatusCode = StSafeA_WrapLocalEnvelope(pStSafeA, keyslot, (uint8_t *)in, inlen, &LV_response,
                                            STSAFEA_MAC_HOST_CMAC, STSAFEA_ENCRYPTION_COMMAND);
-                                           
-    printf("StSafeA_WrapLocalEnvelope StatusCode = %x \n", StatusCode);
 
     return StatusCode;
 
@@ -180,23 +177,21 @@ int stsafe_AES_unwrap_key(unsigned char keyslot, unsigned char *out, const unsig
 {
 
     StSafeA_Handle_t *pStSafeA = &stsafea_handle;
-    printf("stsafe_AES_unwrap_key called.\n");
+    DEBUG_PRINTF_API("stsafe_AES_unwrap_key called.\n");
     int32_t StatusCode = 0;
     StSafeA_LVBuffer_t LV_response;
     
     if(!in || !out || inlen == 0)
     {
-        printf("%s Invalid parameter!\n", __func__);
+        DEBUG_PRINTF_ERROR("%s Invalid parameter!\n", __func__);
         return 1;
     }
 
     LV_response.Data = out;
     
-    StatusCode = StSafeA_UnwrapLocalEnvelope(pStSafeA, keyslot, (uint8_t *)in, inlen, &LV_response,
+    StatusCode = StSafeA_UnwrapLocalEnvelope(pStSafeA, keyslot, (uint8_t*)in, inlen, &LV_response,
                                              STSAFEA_MAC_HOST_CMAC, STSAFEA_ENCRYPTION_RESPONSE);
 
-    printf("StSafeA_UnwrapLocalEnvelope StatusCode = %x \n", StatusCode);
-    
     return StatusCode;
     
 }

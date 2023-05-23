@@ -78,16 +78,7 @@
 #include "stsafea_crypto.h"
 #include "stsafea_interface_conf.h"
 #include "openssl/err.h"
-
-
-#include "stsafe_init.h"
-#include "stsafe_api.h"
-#include "stsafea_types.h"
 #include "stsafea_core.h"
-#include "stsafea_conf.h"
-#include "stsafea_service.h"
-
-
 /* Private typedef -----------------------------------------------------------*/
 
 /* Private defines -----------------------------------------------------------*/
@@ -103,6 +94,7 @@ static uint8_t  aHostMacKey   [] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x
 
 /* Private function prototypes -----------------------------------------------*/
 
+void StSafeA_SHA_Free(StSafeA_HashTypes_t in_hash_type, void** in_sha_ctx);
 /* Functions Definition ------------------------------------------------------*/
 
 /** @addtogroup CRYPTO_IF_Exported_Functions_Group1 Host MAC and Cipher keys Initialization
@@ -168,15 +160,13 @@ int32_t StSafeA_HostKeys_Init()
   * @param   None
   * @retval  0 if success. An error code otherwise
   */
-int32_t StSafeA_HostKeys_Program(void)
+int32_t StSafeA_HostKeys_Program(StSafeA_Handle_t *pStSafeA)
 {
   int32_t StatusCode = 0;
-  
 
 #if !(USE_PRE_LOADED_HOST_KEYS)
-
-  StSafeA_Handle_t *pStSafeA = &stsafea_handle;
   uint8_t keys[32];
+
   memcpy(&keys[0], aHostMacKey, STSAFEA_HOST_KEY_LENGTH);
   memcpy(&keys[STSAFEA_HOST_KEY_LENGTH], aHostCipherKey, STSAFEA_HOST_KEY_LENGTH);
   printf("Programming the host and cipher keys.\n");
@@ -207,44 +197,6 @@ int32_t StSafeA_HostKeys_Program(void)
 @endverbatim
   * @{
   */
-
-/**
-  * @brief   StSafeA_SHA_Free
-  *          SHA final function to free allocated buffer for the SHA Digest
-  *
-  * @param   in_hash_type : type of SHA
-  *          This parameter can be one of the StSafeA_HashTypes_t enum values:
-  *            @arg STSAFEA_SHA_256: 256-bits
-  *            @arg STSAFEA_SHA_384: 384-bits
-  * @param   in_sha_ctx : SHA context to be finalized
-  * @retval  None
-  */
-void StSafeA_SHA_Free(StSafeA_HashTypes_t in_hash_type, void** in_sha_ctx)
-{
-    switch (in_hash_type)
-    {
-    case STSAFEA_SHA_256:
-        if (*in_sha_ctx != NULL)
-        {
-            EVP_MD_CTX_free(*in_sha_ctx);
-        }
-
-        *in_sha_ctx = NULL;
-        break;
-
-    case STSAFEA_SHA_384:
-        if (*in_sha_ctx != NULL)
-        {
-            EVP_MD_CTX_free(*in_sha_ctx);
-        }
-
-        *in_sha_ctx = NULL;
-        break;
-
-    default:
-        break;
-    }
-}
 
 /**
   * @brief   StSafeA_SHA_Init
@@ -362,6 +314,43 @@ void StSafeA_SHA_Final(StSafeA_HashTypes_t in_hash_type, void** in_sha_ctx, uint
     }
 }
 
+/**
+  * @brief   StSafeA_SHA_Free
+  *          SHA final function to free allocated buffer for the SHA Digest
+  *
+  * @param   in_hash_type : type of SHA
+  *          This parameter can be one of the StSafeA_HashTypes_t enum values:
+  *            @arg STSAFEA_SHA_256: 256-bits
+  *            @arg STSAFEA_SHA_384: 384-bits
+  * @param   in_sha_ctx : SHA context to be finalized
+  * @retval  None
+  */
+void StSafeA_SHA_Free(StSafeA_HashTypes_t in_hash_type, void** in_sha_ctx)
+{
+    switch (in_hash_type)
+    {
+    case STSAFEA_SHA_256:
+        if (*in_sha_ctx != NULL)
+        {
+            EVP_MD_CTX_free(*in_sha_ctx);
+        }
+
+        *in_sha_ctx = NULL;
+        break;
+
+    case STSAFEA_SHA_384:
+        if (*in_sha_ctx != NULL)
+        {
+            EVP_MD_CTX_free(*in_sha_ctx);
+        }
+
+        *in_sha_ctx = NULL;
+        break;
+
+    default:
+        break;
+    }
+}
 
 #endif /* USE_SIGNATURE_SESSION */
 

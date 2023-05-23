@@ -75,6 +75,7 @@
 #include "stsafea_interface_conf.h"
 #include "stsafea_service.h"
 #include "openssl/crypto.h"
+#include "engine_debug.h"
 
 extern STSAFEA_HW_t HwCtx;
 
@@ -103,10 +104,16 @@ static uint8_t ExchangeMemory[STSAFEA_BUFFER_MAX_SIZE + 12];
 StSafeA_ResponseCode_t StSafeA_CreateHandle(
   StSafeA_Handle_t *pStSafeA)
 {
-    StSafeA_ResponseCode_t status_code = STSAFEA_UNEXPECTED_ERROR;
+    StSafeA_ResponseCode_t status_code = STSAFEA_OK;
 
-    status_code = StSafeA_Init(pStSafeA, (uint8_t *)ExchangeMemory);
-    printf("STSAFE-A110 StSafeA_CreateHandle = %d, pStSafeA->InOutBuffer = %p, pStSafeA->InOutBuffer.LV.Data = %p\n",status_code, &pStSafeA->InOutBuffer, pStSafeA->InOutBuffer.LV.Data);
+    StSafeA_Init(pStSafeA, (uint8_t *)ExchangeMemory);
+    DEBUG_PRINTF("STSAFE-A110 StSafeA_CreateHandle = %d, pStSafeA->InOutBuffer = %p, pStSafeA->InOutBuffer.LV.Data = %p\n",status_code, &pStSafeA->InOutBuffer, pStSafeA->InOutBuffer.LV.Data);
+
+    /* Initialize all configured peripherals */
+    //if (StSafeA_Bus_Init() == 0)
+   // {
+   //   status_code = STSAFEA_OK;
+   // }
 
     return status_code;
 }

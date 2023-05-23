@@ -102,7 +102,7 @@ static struct _stsane_pkey_def_f {
 } stsafe_pkey_def_f;
 
 
-static EVP_PKEY_METHOD * stsafe_pkey_meth;
+static EVP_PKEY_METHOD * stsafe_pkey_meth = NULL;
 
 static int stsafe_pkey_meth_ids[] = { EVP_PKEY_EC, 0 };
 
@@ -111,92 +111,23 @@ the engine */
 int stsafe_eckey_is_stsafe_key(EC_KEY * ec)
 {
     int ret = ENGINE_OPENSSL_FAILURE;
-    StSafeA_Handle_t *pStSafeA = &stsafea_handle;
-    uint16_t CertificateSize = 0;
-    int32_t StatusCode = 0;
-    StSafeA_LVBuffer_t sts_read_d;
-    StSafeA_LVBuffer_t *sts_read = &sts_read_d;
-    EC_KEY* stsafe_eckey_pub;
-    uint8_t slot;
-    unsigned char *key_in, *key_hw;
-    int keylen = 0, iii;
-    X509 *Cert;
-    const unsigned char *CertificatePos;    
 
-    sts_read_d.Data = pStSafeA->InOutBuffer.LV.Data;
-    
-    for(slot = 0; slot <= 1; slot++)
+    DEBUG_PRINTF_API("%s: ec key %p\n", __func__, ec);
+    stsafe_ecc_ex_data_t *data;
+
+    data = stsafe_ecc_getappdata(ec);
+
+    if (data == NULL)
     {
-        /* make sure slot is either 0 or 1 only */
-        if(slot > 1) slot = 0;
-        
-        /* Extract STSAFE-A's X509 CRT certificate */
-        StatusCode = StSafeA_Read(pStSafeA, 0, 0, STSAFEA_AC_ALWAYS, slot, 0, 4, 4, sts_read, STSAFEA_MAC_NONE);
-
-        if (StatusCode == 0 && sts_read != NULL)
-        {
-            switch (sts_read->Data[1])
-            {
-                case 0x81:
-                    CertificateSize = sts_read->Data[2] + 3;
-                    break;
-
-                case 0x82:
-                    CertificateSize = (((uint16_t)sts_read->Data[2]) << 8) + sts_read->Data[3] + 4;
-                    break;
-
-                default:
-                    if (sts_read->Data[1] < 0x81)
-                    {
-                      CertificateSize = sts_read->Data[1];
-                    }
-                    break;
-            }
-
-            StatusCode = StSafeA_Read(pStSafeA, 0, 0, STSAFEA_AC_ALWAYS, slot, 0, CertificateSize, CertificateSize, sts_read, STSAFEA_MAC_NONE);
-        }
-
-        /* Parse STSAFE-A's X509 CRT certificate */
-        if ((StatusCode == 0) && (sts_read != NULL))
-        {
-            printf("StSafeA_Read Success CertificateSize = %d\n",CertificateSize);
-            CertificatePos = sts_read->Data;
-            Cert = d2i_X509/*_AUX*/(NULL, &CertificatePos, CertificateSize);
-            
-            if(!Cert) continue;
-
-            /* Get Certificate public key */
-            EVP_PKEY *CertPublicKey = X509_get_pubkey(Cert);
-
-            if(!CertPublicKey) continue;
-
-            stsafe_eckey_pub = EVP_PKEY_get1_EC_KEY(CertPublicKey);
-            OPENSSL_free(CertPublicKey);
-        }
-        else
-        {
-            continue;
-        }
-        
-        /* copy the public keys to octet strings and compare */
-         
-        keylen = EC_KEY_key2buf(ec, POINT_CONVERSION_UNCOMPRESSED, &key_in, NULL);
-        printf("\nInput key (len = %d): ", keylen); for(iii = 0; iii< keylen; iii++) printf(" %02x", *(key_in + iii)); printf("\n");
-        keylen = EC_KEY_key2buf(stsafe_eckey_pub, POINT_CONVERSION_UNCOMPRESSED, &key_hw, NULL);
-        printf("\nSTSafe key (len = %d): ", keylen); for(iii = 0; iii< keylen; iii++) printf(" %02x", *(key_hw + iii)); printf("\n");
-
-        if(key_in && key_hw)
-        {
-            if(!memcmp(key_hw, key_in, keylen))
-            {
-                ret = ENGINE_OPENSSL_SUCCESS;
-                break;
-            }
-        }
-
-        if(key_in) OPENSSL_free(key_in);
-        if(key_hw) OPENSSL_free(key_hw);
+      /* not a STSAFE-A110 key */
+      return ret;
     }
+    
+    if(memcmp(stsafe_get_serial(), data->serial, 9) != 0)
+    {
+      return ret;
+    }
+    ret = ENGINE_OPENSSL_SUCCESS;
 
     return ret;
 }
@@ -207,17 +138,19 @@ the engine */
 int stsafe_pkey_is_stsafe_key(EVP_PKEY * pkey)
 {
     int ret = ENGINE_OPENSSL_FAILURE;
-    printf("stsafe_pkey_is_stsafe_key called\n");
+    EC_KEY * ec_key = NULL;
+
+    DEBUG_PRINTF_API("stsafe_pkey_is_stsafe_key called %p %d - %d\n", pkey, ret, ENGINE_OPENSSL_SUCCESS);
     if (pkey)
     {
-        EC_KEY * ec_key = EVP_PKEY_get1_EC_KEY(pkey);
+        ec_key = EVP_PKEY_get1_EC_KEY(pkey);
         if (ec_key)
         {
             ret = stsafe_eckey_is_stsafe_key(ec_key); 
             EC_KEY_free(ec_key);
         }
     }
-    printf("stsafe_pkey_is_stsafe_key return =%d\n",ret);
+    DEBUG_PRINTF_API("stsafe_pkey_is_stsafe_key return =%d %p\n",ret, ec_key);
     return ret;
 }
 
@@ -234,112 +167,122 @@ int stsafe_pkey_is_stsafe_key(EVP_PKEY * pkey)
  */
 static EVP_PKEY* stsafe_load_pubkey_internal(ENGINE *e, EVP_PKEY * pkey, const char* key_id)
 {
-    (void)key_id;
+	(void)key_id;
+
+	DEBUG_PRINTF_API("STSAFE_PKEY> %s called\n", __func__);
+
+	if(!pkey)
+	{
+		pkey = stsafe_key_read(key_id);
+
+		if (pkey)
+		{
+			DEBUG_PRINTF_API("STSAFE_PKEY> %s pkey = %p, ec_key = %p\n", __func__, pkey, EVP_PKEY_get1_EC_KEY(pkey));
+
+			/* Update the reference counter */
+			if(!ENGINE_init(e))
+			{
+				DEBUG_PRINTF_API("STSAFE_PKEY> %s Public key load:  Engine init failed\n", __func__);
+				return NULL;
+			}
+
+			DEBUG_PRINTF_API("STSAFE_PKEY> %s: new PKEY created %p\n", __func__, pkey);
+
+			EVP_PKEY_set1_engine(pkey,e);
+		}
+		else
+		{
+			StSafeA_Handle_t *pStSafeA = &stsafea_handle;
+			size_t CertificateSize = 0;
+			int32_t  StatusCode      = 0;
+			uint8_t *CertData = NULL;
+			StatusCode = stsafe_read_certificate(stsafe_memory_region, &CertData, & CertificateSize);
+
+			/* Update the reference counter */
+			if(!ENGINE_init(e))
+			{
+				DEBUG_PRINTF_API("STSAFE_PKEY> %s Public key load:  Engine init failed\n", __func__);
+				return NULL;
+			}
+
+			/* Parse STSAFE-A's X509 CRT certificate */
+			if ((StatusCode == 0) && (CertData != NULL))
+			{
+				pkey = EVP_PKEY_new();
+
+				DEBUG_PRINTF_API("STSAFE_PKEY> %s StSafeA_Read Success CertificateSize = %d\n", __func__, CertificateSize);
+				const unsigned char *CertificatePos = CertData;
+				X509 *Cert = d2i_X509(NULL, &CertificatePos, CertificateSize);
+
+				OPENSSL_free(CertData);
+				/* Get Certificate public key */
+				if (Cert != NULL)
+				{
+				    EVP_PKEY *CertPublicKey = X509_get_pubkey(Cert);
+				    X509_free(Cert);
+				    EC_KEY* eckey_pub;
+				    eckey_pub = EVP_PKEY_get1_EC_KEY(CertPublicKey);
+				    OPENSSL_free(CertPublicKey);
+				    EVP_PKEY_set1_EC_KEY(pkey,EC_KEY_dup(eckey_pub));
+				    EC_KEY_free(eckey_pub);
+				    stsafe_ecc_ex_data_t *data;
+
+				    data = OPENSSL_malloc(sizeof(*data));
+
+				    data->slot=0;
+				    memcpy(data->serial, stsafe_get_serial(), 9);
+				    data->magic = STSAFE_ECC_APP_DATA_MAGIC;
+				    stsafe_ecc_setappdata(EVP_PKEY_get0_EC_KEY(pkey), data);
+				    EVP_PKEY_set1_engine(pkey,e);
+				}
+			}
+		}
+		DEBUG_PRINTF_API("STSAFE_PKEY> %s returns pkey %p\n", __func__, pkey);
+		return pkey;
+	}
+	else
+	{
+		DEBUG_PRINTF_API("STSAFE_PKEY> %s pkey NOT NULL.\n", __func__);
+	}
+
+	DEBUG_PRINTF_API("STSAFE_PKEY> %s returns pkey\n", __func__);
+	return pkey;
+
+}
+
+int stsafe_ssl_client_cert(ENGINE *e, SSL *ssl, STACK_OF(X509_NAME) *ca_dn, X509 **pcert, EVP_PKEY **pkey, STACK_OF(X509) **pother, UI_METHOD *ui_method, void *callback_data)
+{
+    (void)ui_method;
+    (void)callback_data;
+    (void)pother;
+    (void)ssl;
+    (void)ca_dn;
 
     StSafeA_Handle_t *pStSafeA = &stsafea_handle;
-    EC_KEY           *eckey    = NULL;
-
-    uint16_t CertificateSize = 0;
+    size_t CertificateSize = 0;
     int32_t  StatusCode      = 0;
+    uint8_t *CertData = NULL;
 
-    EC_GROUP *group = NULL;
-
-    StSafeA_LVBuffer_t sts_read_d;
-    StSafeA_LVBuffer_t *sts_read = &sts_read_d;
-    sts_read_d.Data = pStSafeA->InOutBuffer.LV.Data;
-
-    printf("STSAFE_PKEY> %s called\n", __func__);
-
-    if(!pkey)
+    DEBUG_PRINTF_API("STSAFE_PKEY> %s called\n", __func__);
+    *pkey = stsafe_load_pubkey_internal(e, NULL, NULL);
+    if (*pkey)
     {
-        printf("STSAFE_PKEY> %s pkey is NULL so allocate new one\n", __func__);
-        pkey = EVP_PKEY_new();
-        if(!pkey)
-        {
-            printf("STSAFE_PKEY> %s EVP_PKEY_new pkey is NULL\n", __func__);
-            return NULL;
-        }
+      DEBUG_PRINTF_API("STSAFE_PKEY> %s returns 0\n", __func__);
+      /* Extract STSAFE-A's X509 CRT certificate */
+      StatusCode = stsafe_read_certificate(stsafe_memory_region, &CertData, &CertificateSize);
 
-        if (NULL == (eckey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1)))
-        {
-            return NULL;
-        }
-
-        /* Note: After this point eckey is associated with pkey and will be
-        freed when pkey is freed */
-        if (!EVP_PKEY_assign_EC_KEY(pkey, eckey))
-        {
-            EC_KEY_free(eckey);
-            return NULL;
-        }
-        /* Assign the group info */
-        group = (EC_GROUP *)EC_KEY_get0_group(eckey);
-        if (group)
-        {
-            EC_GROUP_set_point_conversion_form(group, POINT_CONVERSION_UNCOMPRESSED);
-            EC_GROUP_set_asn1_flag(group, OPENSSL_EC_NAMED_CURVE);
-        }
-        
-        /* Update the reference counter */
-        if(!ENGINE_init(e))
-        {
-            printf("STSAFE_PKEY> %s Public key load:  Engine init failed\n", __func__);
-            return NULL;
-        }
-
-        EVP_PKEY_set1_engine(pkey,e);
-        EVP_PKEY_set_type(pkey,EVP_PKEY_EC);
-
-        /* Extract STSAFE-A's X509 CRT certificate */
-        StatusCode = StSafeA_Read(pStSafeA, 0, 0, STSAFEA_AC_ALWAYS, stsafe_memory_region, 0, 4, 4, sts_read, STSAFEA_MAC_NONE);
-        if (StatusCode == 0 && sts_read != NULL)
-        {
-            switch (sts_read->Data[1])
-            {
-            case 0x81:
-                CertificateSize = sts_read->Data[2] + 3;
-                break;
-
-            case 0x82:
-                CertificateSize = (((uint16_t)sts_read->Data[2]) << 8) + sts_read->Data[3] + 4;
-                break;
-
-            default:
-                if (sts_read->Data[1] < 0x81)
-                {
-                    CertificateSize = sts_read->Data[1];
-                }
-                break;
-            }
-
-            StatusCode = StSafeA_Read(pStSafeA, 0, 0, STSAFEA_AC_ALWAYS, stsafe_memory_region, 0, CertificateSize, CertificateSize, sts_read, STSAFEA_MAC_NONE);
-        }
-
-        /* Parse STSAFE-A's X509 CRT certificate */
-        if ((StatusCode == 0) && (sts_read != NULL))
-        {
-            printf("STSAFE_PKEY> %s StSafeA_Read Success CertificateSize = %d\n", __func__, CertificateSize);
-            const unsigned char *CertificatePos = sts_read->Data;
-            X509 *Cert = d2i_X509/*_AUX*/(NULL, &CertificatePos, CertificateSize);
-
-            /* Get Certificate public key */
-            EVP_PKEY *CertPublicKey = X509_get_pubkey(Cert);
-
-            EC_KEY* eckey_pub;
-            eckey_pub = EVP_PKEY_get1_EC_KEY(CertPublicKey);
-            free(CertPublicKey);
-            EVP_PKEY_set1_EC_KEY(pkey,eckey_pub);
-
-        }
+      /* Parse STSAFE-A's X509 CRT certificate */
+      if ((StatusCode == 0) && (CertData != NULL))
+      {
+        DEBUG_PRINTF_API("STSAFE_PKEY> %s StSafeA_Read Success CertificateSize = %d\n", __func__, CertificateSize);
+        const unsigned char *CertificatePos = CertData;
+        *pcert = d2i_X509/*_AUX*/(NULL, &CertificatePos, CertificateSize);
+	OPENSSL_free(CertData);
+      }
+      return 0;
     }
-    else
-    {
-        printf("STSAFE_PKEY> %s pkey NOT NULL.\n", __func__);
-    }
-    
-    printf("STSAFE_PKEY> %s returns pkey\n", __func__);
-    return pkey;
-
+    DEBUG_PRINTF_API("STSAFE_PKEY> %s returns 1\n", __func__);
+    return 1;
 }
 
 
@@ -350,7 +293,7 @@ EVP_PKEY* stsafe_load_pubkey(ENGINE *e, const char *key_id,
 {
     (void)ui_method;
     (void)callback_data;
-    printf("STSAFE_PKEY> %s called\n", __func__);
+    DEBUG_PRINTF_API("STSAFE_PKEY> %s called\n", __func__);
     return stsafe_load_pubkey_internal(e, NULL, key_id);
 }
 
@@ -362,45 +305,65 @@ EVP_PKEY* stsafe_load_privkey(ENGINE *e, const char *key_id,
 {
     (void)ui_method;
     (void)callback_data;
-    printf("stsafe_load_privkey called \n");
+    DEBUG_PRINTF_API("stsafe_load_privkey called \n");
     return stsafe_load_pubkey_internal(e, NULL, key_id);
 }
+
+#ifndef STSAFE_DEFAULT_KEY
+#define STSAFE_DEFAULT_KEY 1
+#endif
 
 /** \brief Intercept key initialization and see if the incoming context is a
 saved key specific for this device */
 int stsafe_pkey_ec_init(EVP_PKEY_CTX *ctx)
 {
-    printf("stsafe_pkey_ec_init called\n");
-    if (ctx)
-    {    
-
-        printf("stsafe_pkey_ec_init ctx not NULL \n");
-        /* Check if the key is actually meta data pertaining to an stsafe 
-            device configuration */
-        if (stsafe_pkey_is_stsafe_key(EVP_PKEY_CTX_get0_pkey(ctx)))
-        {
-            /* Load the public key from the device - OpenSSL would have already
-            checked the key against a cert if it was asked to use the cert so
-            this may be redundant depending on the use */
-            if (!stsafe_load_pubkey_internal(EVP_PKEY_get0_engine(EVP_PKEY_CTX_get0_pkey(ctx)), 
-                EVP_PKEY_CTX_get0_pkey(ctx), NULL))
-            {
-                printf("stsafe_pkey_ec_init return ENGINE_OPENSSL_FAILURE \n");
-                return ENGINE_OPENSSL_FAILURE;
-            }
-        }
+  DEBUG_PRINTF_API("stsafe_pkey_ec_init called EVP_PKEY_CTX = %p\n", ctx);
+  if (ctx)
+  {    
+    DEBUG_PRINTF_API("stsafe_pkey_ec_init ctx not NULL %p\n", EVP_PKEY_CTX_get0_pkey(ctx));
+    /* Check if the key is actually meta data pertaining to an stsafe 
+       device configuration */
+    if (stsafe_pkey_is_stsafe_key(EVP_PKEY_CTX_get0_pkey(ctx)))
+    {
+      /* Load the public key from the device - OpenSSL would have already
+         checked the key against a cert if it was asked to use the cert so
+         this may be redundant depending on the use */
+      if (!stsafe_load_pubkey_internal(EVP_PKEY_get0_engine(EVP_PKEY_CTX_get0_pkey(ctx)), 
+            EVP_PKEY_CTX_get0_pkey(ctx), NULL))
+      {
+        DEBUG_PRINTF_API("stsafe_pkey_ec_init return ENGINE_OPENSSL_FAILURE \n");
+        return ENGINE_OPENSSL_FAILURE;
+      }
     }
+    else
+    {
+      if (EVP_PKEY_CTX_get0_pkey(ctx))
+      {
+        /* external key usage */
+        /* set default to STSAFE_DEFAULT_KEY */
+        stsafe_ecc_ex_data_t *data;
 
-    printf("stsafe_pkey_ec_init returned\n");
-    return stsafe_pkey_def_f.init ? stsafe_pkey_def_f.init(ctx)
-        : ENGINE_OPENSSL_SUCCESS;
+        data = OPENSSL_malloc(sizeof(*data));
+
+        data->slot=STSAFE_DEFAULT_KEY;
+        memcpy(data->serial, stsafe_get_serial(), 9);
+        data->magic = STSAFE_ECC_APP_DATA_MAGIC;
+        stsafe_ecc_setappdata(EVP_PKEY_get0_EC_KEY(EVP_PKEY_CTX_get0_pkey(ctx)), data);
+        DEBUG_PRINTF_API("%s: adding STSAFE slot %ld to external key\n", __func__, data->slot);	
+      }
+    }
+  }
+
+  DEBUG_PRINTF_API("stsafe_pkey_ec_init returned\n");
+  return stsafe_pkey_def_f.init ? stsafe_pkey_def_f.init(ctx)
+    : ENGINE_OPENSSL_SUCCESS;
 }
 
 
 static int stsafe_pkey_ec_sign_init(EVP_PKEY_CTX *ctx)
 {
 
-    printf("stsafe_pkey_ec_sign_init called\n");
+    DEBUG_PRINTF_API("stsafe_pkey_ec_sign_init called\n");
     return stsafe_pkey_def_f.sign_init ? stsafe_pkey_def_f.sign_init(ctx)
         : ENGINE_OPENSSL_SUCCESS;
 }
@@ -410,10 +373,10 @@ static int stsafe_pkey_ec_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
                                size_t *siglen, const unsigned char *tbs, size_t tbslen)
 {
 
-    printf("stsafe_pkey_ec_sign called \n");
+    DEBUG_PRINTF_API("stsafe_pkey_ec_sign called \n");
     if (stsafe_pkey_is_stsafe_key(EVP_PKEY_CTX_get0_pkey(ctx)))
     {
-        printf("stsafe_pkey_ec_sign ---1\n");
+        DEBUG_PRINTF_API("stsafe_pkey_ec_sign ---1\n");
         int ret = ENGINE_OPENSSL_FAILURE;
         EC_KEY * ec = EVP_PKEY_get1_EC_KEY(EVP_PKEY_CTX_get0_pkey(ctx));
         ECDSA_SIG *ecs = NULL;
@@ -421,7 +384,7 @@ static int stsafe_pkey_ec_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
         do
         {
         
-            printf("stsafe_pkey_ec_sign ---signlen=%zd\n",*siglen);
+            DEBUG_PRINTF_API("stsafe_pkey_ec_sign ---signlen=%zd\n",*siglen);
             if (siglen)
             {
                 /* Return required signature length */
@@ -440,13 +403,16 @@ static int stsafe_pkey_ec_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
                 /* Invalid call method */
                 break;
             }
-            printf("stsafe_pkey_ec_sign ---tbslen=%zd\n",tbslen);
+            DEBUG_PRINTF_API("stsafe_pkey_ec_sign ---tbslen=%zd\n",tbslen);
             ecs = stsafe_engine_ecdsa_do_sign(tbs, tbslen, NULL, NULL, ec);
 
             *siglen = ecs ? i2d_ECDSA_SIG(ecs, &sig): 0;
 
             ret = ENGINE_OPENSSL_SUCCESS;
         } while (0);
+
+        
+        DEBUG_PRINTF_API("stsafe_pkey_ec_sign ---signlen=%ld\n",*siglen);
 
         if (ecs)
         {
@@ -485,10 +451,10 @@ int stsafe_pkey_meths(ENGINE *e, EVP_PKEY_METHOD **pkey_meth,
                        const int **nids, int nid)
 {
     (void)e;
-    printf("stsafe_pkey_meths called nid=%d\n",nid);
+    DEBUG_PRINTF_API("stsafe_pkey_meths called nid=%d\n",nid);
     if (!pkey_meth) {
         *nids = stsafe_pkey_meth_ids;
-        return 2;
+        return 1;
     }
 
     if (EVP_PKEY_EC == nid)
@@ -510,8 +476,8 @@ int stsafe_pkey_meths(ENGINE *e, EVP_PKEY_METHOD **pkey_meth,
  */
 int stsafe_pkey_meth_init(void)
 {
-    static const EVP_PKEY_METHOD * defaults;
-    printf("stsafe_pkey_meth_init called\n");
+    const EVP_PKEY_METHOD * defaults;
+    DEBUG_PRINTF_API("stsafe_pkey_meth_init called\n");
     if (!stsafe_pkey_meth)
     {
         stsafe_pkey_meth = EVP_PKEY_meth_new(EVP_PKEY_EC, 0);
@@ -536,7 +502,7 @@ int stsafe_pkey_meth_init(void)
     EVP_PKEY_meth_set_sign(stsafe_pkey_meth, stsafe_pkey_ec_sign_init, stsafe_pkey_ec_sign);
 
 
-    printf("stsafe_pkey_meth_init finished\n");
+    DEBUG_PRINTF_API("stsafe_pkey_meth_init finished\n");
 
     return ENGINE_OPENSSL_SUCCESS;
 }

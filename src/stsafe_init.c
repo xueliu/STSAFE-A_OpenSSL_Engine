@@ -102,7 +102,32 @@
 
 int32_t stsafe_pairing(void);
 
+int32_t StSafeA_HostKeys_Program(StSafeA_Handle_t *p);
+
 StSafeA_Handle_t stsafea_handle;
+static uint8_t stsafe_serial[9];
+static uint8_t cmd_auth[STSAFEA_MAX_CMD][2];
+
+int32_t get_cmd_auth_enc(uint8_t cmd, uint8_t *mac, uint8_t *enc)
+{
+    if ((mac == NULL) || (enc == NULL))
+        return -1;
+    if (cmd < STSAFEA_MAX_CMD)
+    {
+        *mac = cmd_auth[cmd][0];
+        *enc = cmd_auth[cmd][1];
+        return 0;
+    }
+    return -1;
+}
+
+
+/* Developer host pairing keys. Do NOT use in a product. */
+
+uint8_t *stsafe_get_serial(void)
+{
+  return stsafe_serial;
+}
 
 /**
   * @brief   stsafe_init
@@ -113,36 +138,29 @@ StSafeA_Handle_t stsafea_handle;
   * @param   None
   * @retval  0 if success. An error code otherwise.
   */
-int stsafe_init(ENGINE *e)
+int stsafe_init(struct engine_st *ctx)
 {
-    (void)e;
+    (void)ctx;
     uint8_t status_code = 1;
     StSafeA_Handle_t *pStSafeA = &stsafea_handle;
 
-    printf("Using Openssl     : %s\n", SSLeay_version(SSLEAY_VERSION));
+    DEBUG_PRINTF("Using Openssl     : %s\n", SSLeay_version(SSLEAY_VERSION));
 
     /* Create STSAFE-A's handle */
     status_code = StSafeA_CreateHandle(pStSafeA);
 
     if (status_code == 0)
     {
-        printf("creating STSAFE-A's handle\n");
-        printf("StSafeA_GetDataBufferSize(): %d\n", StSafeA_GetDataBufferSize());              
-        printf("Main : Now let's pair ... \n");
-        
+        DEBUG_PRINTF("StSafeA_GetDataBufferSize(): %d\n", StSafeA_GetDataBufferSize());
+    
         status_code = stsafe_pairing();
-        
         if (status_code == 0)
         {
-            printf("Main : stsafe_pairing success \n");
+            DEBUG_PRINTF("Main : stsafe_pairing success \n");
         }
-        else
-        {
-			printf("Main : stsafe_pairing failed \n");
-		}
    
-        printf("\n************^^^^^^^^^^^^*************** \n");       
-        printf("Setting STSAFE-A110 host keys\n");
+        DEBUG_PRINTF("\n************^^^^^^^^^^^^*************** \n");       
+        DEBUG_PRINTF("Setting STSAFE-A110 host keys\n");
 
         /* Initialize/Retrieve the Host MAC and Cipher Keys  */
         if (StSafeA_HostKeys_Init() == 0)
@@ -151,12 +169,47 @@ int stsafe_init(ENGINE *e)
         }
 
     }
-    else
+    StSafeA_ProductDataBuffer_t query_d;
+    memset(&query_d, 0, sizeof(StSafeA_ProductDataBuffer_t));
+    StSafeA_ProductDataBuffer_t *query = &query_d;
+    status_code = StSafeA_ProductDataQuery(pStSafeA,
+                                          query,
+                                          STSAFEA_MAC_NONE);
+    if ((status_code == 0) && (query != NULL)) {
+      memcpy(stsafe_serial, query->STNumber, 9);
+    }
+    StSafeA_CommandAuthorizationRecordBuffer_t cmd_rec[STSAFEA_MAX_CMD];
+    StSafeA_CommandAuthorizationConfigurationBuffer_t cmd_auth_enc;
+
+    cmd_auth_enc.pCommandAuthorizationRecord = cmd_rec;
+
+
+    status_code = StSafeA_CommandAuthorizationConfigurationQuery(pStSafeA, STSAFEA_MAX_CMD, &cmd_auth_enc, STSAFEA_MAC_NONE);
+    if (status_code == 0)
     {
-		printf("problem while creating STSAFE-A's handle\n");
-		return ENGINE_OPENSSL_ERROR;
-	}
-    printf("\n************vvvvvvvvvvvv*************** \n"); 
+        for (int i = 0; i < cmd_auth_enc.CommandAuthorizationRecordNumber; i++)
+        {
+            uint8_t l_index = STSAFEA_MAX_CMD+1;
+            switch(cmd_rec[i].CommandCode)
+            {
+                case 0x1C : l_index = STSAFEA_DECRYPT; break;
+                case 0x08 : l_index = STSAFEA_DERIVE; break;
+                case 0x1B : l_index = STSAFEA_ENCRYPT; break;
+                case 0x18 : l_index = STSAFEA_ESTABLISH; break;
+                case 0x09 : l_index = STSAFEA_GEN_MAC; break;
+                case 0x16 : l_index = STSAFEA_GEN_SIG; break;
+                case 0x0f : l_index = STSAFEA_UNWRAP; break;
+                case 0x0E : l_index = STSAFEA_WRAP; break;
+                case 0x0A : l_index = STSAFEA_VER_MAC; break;
+            }
+            if (l_index < STSAFEA_MAX_CMD)
+            {
+                cmd_auth[l_index][0] = (cmd_rec[i].CommandAC == 1 ? STSAFEA_MAC_NONE : STSAFEA_MAC_HOST_CMAC);
+                cmd_auth[l_index][1] = (cmd_rec[i].HostEncryptionFlags);
+            }
+        }
+    }
+    DEBUG_PRINTF("\n************vvvvvvvvvvvv*************** \n");
 
     return ENGINE_OPENSSL_SUCCESS;
 }
@@ -179,33 +232,33 @@ int32_t stsafe_pairing(void)
     StSafeA_LocalEnvelopeKeyTableBuffer_t *LocalEnvelopeKeyTable = (StSafeA_LocalEnvelopeKeyTableBuffer_t *)malloc(sizeof(StSafeA_LocalEnvelopeKeyTableBuffer_t));
     StSafeA_LocalEnvelopeKeyInformationRecordBuffer_t  *LocalEnvelopeInfoSlot0 = (StSafeA_LocalEnvelopeKeyInformationRecordBuffer_t *)malloc(sizeof(StSafeA_LocalEnvelopeKeyInformationRecordBuffer_t));   
     StSafeA_LocalEnvelopeKeyInformationRecordBuffer_t  *LocalEnvelopeInfoSlot1 = (StSafeA_LocalEnvelopeKeyInformationRecordBuffer_t *)malloc(sizeof(StSafeA_LocalEnvelopeKeyInformationRecordBuffer_t));
-    printf("About to call StSafeA_LocalEnvelopeKeySlotQuery: %p, %p, %p \n", LocalEnvelopeKeyTable, LocalEnvelopeInfoSlot0, LocalEnvelopeInfoSlot1 );
+    DEBUG_PRINTF("About to call StSafeA_LocalEnvelopeKeySlotQuery: %p, %p, %p \n", LocalEnvelopeKeyTable, LocalEnvelopeInfoSlot0, LocalEnvelopeInfoSlot1 );
 
     /* Check if the LocalEnveope key slots are populated */
     StatusCode = StSafeA_LocalEnvelopeKeySlotQuery(pStSafeA, LocalEnvelopeKeyTable, LocalEnvelopeInfoSlot0, LocalEnvelopeInfoSlot1, STSAFEA_MAC_NONE);
-    
-    printf("StSafeA_LocalEnvelopeKeySlotQuery: StatusCode=%x slot 0: presence flag =%d \n", StatusCode,LocalEnvelopeInfoSlot0->PresenceFlag );
+
+    DEBUG_PRINTF("StSafeA_LocalEnvelopeKeySlotQuery: %d slot 0: presence flag =%d \n", StatusCode,LocalEnvelopeInfoSlot0->PresenceFlag );
     if ((StatusCode == 0) && (LocalEnvelopeInfoSlot0->PresenceFlag == 0))
     {
-        printf("Calling StSafeA_GenerateLocalEnvelopeKey\n" );
+        DEBUG_PRINTF("Calling StSafeA_GenerateLocalEnvelopeKey\n" );
         StatusCode = StSafeA_GenerateLocalEnvelopeKey(pStSafeA, STSAFEA_KEY_SLOT_0, STSAFEA_KEY_TYPE_AES_128, NULL, 0, STSAFEA_MAC_NONE);
-        printf(" StSafeA_GenerateLocalEnvelopeKey StatusCode =%x\n",StatusCode );
+        DEBUG_PRINTF(" StSafeA_GenerateLocalEnvelopeKey StatusCode =%d\n",StatusCode );
     }
 
-    printf("StSafeA_LocalEnvelopeKeySlotQuery: StatusCode=%x slot 1: presence flag =%d \n", StatusCode,LocalEnvelopeInfoSlot1->PresenceFlag );
+    DEBUG_PRINTF("StSafeA_LocalEnvelopeKeySlotQuery: %d slot 1: presence flag =%d \n", StatusCode,LocalEnvelopeInfoSlot1->PresenceFlag );
     if ((StatusCode == 0) && (LocalEnvelopeInfoSlot1->PresenceFlag == 0))
     {
-        printf("Calling StSafeA_GenerateLocalEnvelopeKey\n" );     
+        DEBUG_PRINTF("Calling StSafeA_GenerateLocalEnvelopeKey\n" );     
         StatusCode = StSafeA_GenerateLocalEnvelopeKey(pStSafeA, STSAFEA_KEY_SLOT_1, STSAFEA_KEY_TYPE_AES_128, NULL, 0, STSAFEA_MAC_NONE);
-        printf(" StSafeA_GenerateLocalEnvelopeKey StatusCode =%x\n",StatusCode );     
+        DEBUG_PRINTF(" StSafeA_GenerateLocalEnvelopeKey StatusCode =%d\n",StatusCode );     
     }
 
     /* Host key pairing */
-      
+    DEBUG_PRINTF("---HostKeySlot = %p, pStSafeA->InOutBuffer.LV.Data = %p\n", &HostKeySlot, pStSafeA->InOutBuffer.LV.Data);
+  
     /* Check if host cipher key & host MAC key are populated if not then they are populated */
     StatusCode =  StSafeA_HostKeySlotQuery(pStSafeA, &HostKeySlot, STSAFEA_MAC_NONE);
-    printf("StatusCode=%x ---HostKeySlot = %p, pStSafeA->InOutBuffer.LV.Data = %p\n",StatusCode, &HostKeySlot, pStSafeA->InOutBuffer.LV.Data);
-    printf("HostKeySlot->HostKeyPresenceFlag: %d \n", HostKeySlot.HostKeyPresenceFlag  );     
+    DEBUG_PRINTF("HostKeySlot->HostKeyPresenceFlag: %d \n", HostKeySlot.HostKeyPresenceFlag  );     
 
     pStSafeA->HostMacSequenceCounter = HostKeySlot.HostCMacSequenceCounter;
 
@@ -214,7 +267,7 @@ int32_t stsafe_pairing(void)
        NOTE: For products random key values should be used */
     if (!HostKeySlot.HostKeyPresenceFlag)      
     {
-        StSafeA_HostKeys_Program();
+        StSafeA_HostKeys_Program(pStSafeA);
     }
     free(LocalEnvelopeKeyTable);
     free(LocalEnvelopeInfoSlot0);
@@ -232,7 +285,7 @@ int stsafe_reset(void)
 {
     StSafeA_Handle_t *pStSafeA = &stsafea_handle;
     
-    fprintf(stdout, "ENGINE> %s: Reseting STSAFE hardware to default state, and then re-init the driver.\n", __func__);
+    DEBUG_FPRINTF(stdout, "ENGINE> %s: Reseting STSAFE hardware to default state, and then re-init the driver.\n", __func__);
     StSafeA_Reset(pStSafeA, STSAFEA_MAC_NONE);
     stsafe_init(NULL);
     
@@ -245,7 +298,7 @@ int stsafe_hibernate(int wakeupcode)
     StSafeA_Handle_t *pStSafeA = &stsafea_handle;
     int32_t StatusCode = 0;
 
-    fprintf(stdout, "ENGINE> %s: Reseting STSAFE hardware to default state, and then re-init the driver.\n", __func__);
+    DEBUG_FPRINTF(stdout, "ENGINE> %s: Reseting STSAFE hardware to default state, and then re-init the driver.\n", __func__);
     StatusCode = StSafeA_Hibernate(pStSafeA, wakeupcode, STSAFEA_MAC_NONE);
 
     return StatusCode;

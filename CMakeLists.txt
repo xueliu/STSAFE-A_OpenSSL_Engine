@@ -39,9 +39,28 @@ if (NOT (${CMAKE_INSTALL_PREFIX} STREQUAL "/usr" ) )
     SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 endif()
 
+# generate compile_commands.json
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(BUILD_SHARED_LIBS ON)
 
+# compile options
+set(DEBUG_LEVEL "4" CACHE STRING "Stsafe: library debug level"    FORCE)
+set_property(CACHE DEBUG_LEVEL PROPERTY STRINGS 1 2 3 4 )
+
+#set(STSAFEA_DEVICE_ADDRESS  "0x0020"  CACHE STRING "Stsafe: i2c address"    FORCE)
+set(STSAFEA_DEFAULT_I2CBUS  "1"     CACHE STRING "Stsafe: i2c bus"    FORCE)
+set(STSAFE_ECDSA_VERIFY     1      CACHE BOOL "Stsafe: ECDSA verify"    FORCE)
+set(STSAFE_ECDH_ENABLE      1      CACHE BOOL "Stsafe: ECDH enable"    FORCE)
+
+set(PACKAGE_VERSION "2.0.5")
+
+message(STATUS "Stsafe: debug level: " ${DEBUG_LEVEL})
+message(STATUS "Stsafe: device address: " ${STSAFEA_DEVICE_ADDRESS})
+message(STATUS "Stsafe: i2c bus: " ${STSAFEA_DEFAULT_I2CBUS})
+message(STATUS "Stsafe: verify ECDSA: " ${STSAFE_ECDSA_VERIFY})
+message(STATUS "Stsafe: enable ECDH: " ${STSAFE_ECDH_ENABLE})
+
+configure_file(${CMAKE_CURRENT_LIST_DIR}/config.h.in "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
 
 # Include core-modules
 include(lib/STSAFE_Axx0/CMakeLists.txt)
@@ -58,6 +77,7 @@ target_sources(
         ${CMAKE_CURRENT_LIST_DIR}/src/stsafe_configuration.c
         ${CMAKE_CURRENT_LIST_DIR}/src/stsafe_ecdsa.c
         ${CMAKE_CURRENT_LIST_DIR}/src/stsafe_init.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/stsafe_pem_priv.c
         ${CMAKE_CURRENT_LIST_DIR}/src/stsafe_pkey_meth.c
         ${CMAKE_CURRENT_LIST_DIR}/src/stsafe_rand.c
         ${CMAKE_CURRENT_LIST_DIR}/src/stsafe_zone.c
@@ -74,10 +94,15 @@ target_include_directories(
 )
 
 target_compile_options(
-        Stsafe
+    Stsafe
         PUBLIC
         -DSTSAFE_A110
         -DBUS_CONF_DEBUG
+        -DDEBUG_LEVEL=${DEBUG_LEVEL}
+        -DSTSAFEA_DEFAULT_I2CBUS=\"${STSAFEA_DEFAULT_I2CBUS}\"
+#        -DSTSAFEA_DEVICE_ADDRESS=${STSAFEA_DEVICE_ADDRESS}
+        -DSTSAFE_ECDSA_VERIFY=${STSAFE_ECDSA_VERIFY}
+        -DSTSAFE_ECDH_ENABLE=${STSAFE_ECDH_ENABLE}
 )
 
 # Include examples

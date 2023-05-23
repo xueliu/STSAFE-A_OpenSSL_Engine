@@ -90,7 +90,13 @@
 /* Private define ------------------------------------------------------------*/
 
 /* I2C address */
+#ifndef STSAFEA_DEVICE_ADDRESS
 #define STSAFEA_DEVICE_ADDRESS                    0x0020
+#endif
+
+#ifndef STSAFEA_DEFAULT_I2CBUS
+#define STSAFEA_DEFAULT_I2CBUS "1"
+#endif
 
 /* Set to 1 to have CRC16_CCIT Table already calculated and placed in Flash as const. Set to zero to dynamically calculate it in RAM */
 #define STSAFEA_USE_OPTIMIZATION_CRC_TABLE     1U
@@ -116,7 +122,6 @@
 }
 
 /* Private variables ---------------------------------------------------------*/
-static const uint8_t I2CBUS = 1;
 
 /* File descriptor ID for I2C */
 static int32_t _fd = -1;
@@ -152,7 +157,7 @@ static int32_t _fd = -1;
 
 /* Private function prototypes -----------------------------------------------*/
 
-#if defined (BUS_CONF_DEBUG) && defined(BUS_CONF_MONITORING)
+#if defined (BUS_CONF_DEBUG)
 static char *Delta2Str(long delta, char *string, size_t string_size);
 static char *Tag2Str(uint8_t tag);
 static char *Cmd2Name(uint8_t cmd, uint8_t extra, char *string, size_t string_size);
@@ -161,16 +166,16 @@ static char *Rmac2Str(uint8_t cmd);
 static char *Secure2Str(uint8_t cmd);
 static char *Cmd2Str(uint8_t cmd, uint8_t extra);
 #endif
-
 static int32_t CRC16X25_Init(void);
 static uint32_t CRC_Compute(uint8_t *pData1, uint16_t Length1, uint8_t *pData2, uint16_t Length2);
-int32_t StSafeA_Bus_Init(void);
-int32_t StSafeA_Bus_DeInit(void);
+
 int32_t StSafeA_HW_IO_Init(void);
 void StSafeA_I2C_DELAY(uint32_t msDelay);
+static const char *I2CBUS = STSAFEA_DEFAULT_I2CBUS;
+int32_t StSafeA_Bus_Init(void);
+int32_t StSafeA_Bus_DeInit(void);
 int32_t StSafeA_Bus_Send(uint16_t DevAddr, uint8_t *pData, uint16_t Length);
 int32_t  StSafeA_Bus_Recv(uint16_t DevAddr, uint8_t *pData, uint16_t Length);
-
 /* public functions ---------------------------------------------------------*/
 /**
   * @brief  Configure STSAFE IO and Bus operation functions to be implemented at User level
@@ -181,11 +186,11 @@ int8_t StSafeA_HW_Probe(void *pCtx)
 {
     STSAFEA_HW_t *myHwCtx = (STSAFEA_HW_t *)pCtx;
 
-    myHwCtx->IOInit     = StSafeA_HW_IO_Init;
     myHwCtx->BusInit    = StSafeA_Bus_Init;
     myHwCtx->BusDeInit  = StSafeA_Bus_DeInit;
     myHwCtx->BusSend    = StSafeA_Bus_Send;
     myHwCtx->BusRecv    = StSafeA_Bus_Recv;
+    myHwCtx->IOInit     = StSafeA_HW_IO_Init;
     myHwCtx->CrcInit    = CRC16X25_Init;
     myHwCtx->CrcCompute = CRC_Compute;
     myHwCtx->TimeDelay  = StSafeA_I2C_DELAY;
@@ -205,13 +210,13 @@ int32_t StSafeA_Bus_Init(void)
 {
     char name[16];
 
-    snprintf(name, 16, "/dev/i2c-%d", I2CBUS);
+    snprintf(name, 16, "/dev/i2c-%s", I2CBUS);
 
     _fd = open(name, O_RDWR);
 
     if (_fd == -1)
     {
-      BUS_CONF_Print("Unable to open I2C bus\n");
+      BUS_CONF_Print("Unable to open I2C bus %s\n", name);
       _fd = -1;
     }
 
@@ -222,19 +227,6 @@ int32_t StSafeA_Bus_Init(void)
 int32_t StSafeA_Bus_DeInit(void)
 {
     return (0);
-}
-
-/* holder function, doing nothing since the platform should have initialized IOs already */
-int32_t StSafeA_HW_IO_Init(void)
-{
-    return (0); /* Return 0 if success */
-}
-
-/* I2C delay function */
-void StSafeA_I2C_DELAY(uint32_t msDelay)
-{
-    I2C_DELAY(msDelay);
-    return;
 }
 
 /**
@@ -287,7 +279,7 @@ int32_t  StSafeA_Bus_Recv(uint16_t DevAddr, uint8_t *pData, uint16_t Length)
     
     status_code = read(_fd, pData, Length);
 
-    if ((status_code != Length) && (errno == EREMOTEIO ))
+    if ((status_code != Length) && ((errno == EREMOTEIO) || (errno == ENXIO) ))
     {
       status_code = STSAFEA_BUS_NACK;
     }
@@ -302,6 +294,38 @@ int32_t  StSafeA_Bus_Recv(uint16_t DevAddr, uint8_t *pData, uint16_t Length)
     
     return status_code;
 }
+
+/* holder function, doing nothing since the platform should have initialized IOs already */
+int32_t StSafeA_HW_IO_Init(void)
+{
+    return (0); /* Return 0 if success */
+}
+
+/* I2C delay function */
+#include <time.h>
+#include <errno.h>    
+void StSafeA_I2C_DELAY(uint32_t msDelay)
+{
+  I2C_DELAY(msDelay);
+#if 0
+/* msleep(): Sleep for the requested number of milliseconds. */
+    struct timespec ts;
+    int res;
+
+    if (msDelay < 0)
+    {
+        errno = EINVAL;
+    }
+
+    ts.tv_sec = msDelay / 1000;
+    ts.tv_nsec = (msDelay % 1000) * 1000000;
+
+    do {
+        res = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME,&ts, NULL);
+    } while (res && errno == EINTR);
+#endif
+}
+
 
 /*
  * 
@@ -416,7 +440,7 @@ uint32_t CRC_Compute(uint8_t *pData1, uint16_t Length1, uint8_t *pData2, uint16_
  * 
  */
  
-#if defined (BUS_CONF_DEBUG) && defined(BUS_CONF_MONITORING)
+#if defined (BUS_CONF_DEBUG)
 static char *Delta2Str(long delta, char *string, size_t string_size)
 {
   long ms;
@@ -426,7 +450,7 @@ static char *Delta2Str(long delta, char *string, size_t string_size)
   decimal = delta - (ms * 1000000);
   decimal /= 1000;
 
-  memset(string, 0, sizeof(string_size));
+  memset(string, '\0', sizeof(string_size));
   snprintf(string, string_size, "%5ld.%03ld", ms, decimal);
 
   return string;
@@ -496,7 +520,7 @@ static char *Tag2Str(uint8_t tag)
 
 static char *Cmd2Name(uint8_t cmd, uint8_t extra, char *string, size_t string_size)
 {
-  memset(string, 0, sizeof(string_size));
+  memset(string, '\0', sizeof(string_size));
 
   switch (cmd)
   {
@@ -594,7 +618,7 @@ static char *Cmd2Str(uint8_t cmd, uint8_t extra)
   static char str[256];
   char cmd_name[30];
 
-  memset(str, 0, sizeof(str));
+  memset(str, '\0', sizeof(str));
 
   snprintf(str, 256, "%s 0x%02x %s%s%s",
            Cmd2Name(cmd & 0x1F, extra, &cmd_name[0], sizeof(cmd_name)),
@@ -603,5 +627,4 @@ static char *Cmd2Str(uint8_t cmd, uint8_t extra)
   return str;
 }
 #endif
-
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

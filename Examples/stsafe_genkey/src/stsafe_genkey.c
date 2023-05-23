@@ -6,64 +6,28 @@
  * @date    31-July-2020
  * @brief   Openssl STSAFE Engine EC key generation tool
  *********************************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; COPYRIGHT 2020 STMicroelectronics</center></h2>
-  *
-  * SLA0088 SOFTWARE LICENSE AGREEMENT
-  * Revision : 2
-  * Date : 28-Oct-2020
-  *
-  * BY INSTALLING, COPYING, DOWNLOADING, ACCESSING OR OTHERWISE USING THIS SOFTWARE OR ANY PART
-  * THEREOF (AND THE RELATED DOCUMENTATION) FROM STMICROELECTRONICS INTERNATIONAL N.V, SWISS
-  * BRANCH AND/OR ITS AFFILIATED COMPANIES (STMICROELECTRONICS), THE RECIPIENT, ON BEHALF OF HIMSELF
-  * OR HERSELF, OR ON BEHALF OF ANY ENTITY BY WHICH SUCH RECIPIENT IS EMPLOYED AND/OR ENGAGED
-  * AGREES TO BE BOUND BY THIS SOFTWARE LICENSE AGREEMENT.
-  * Under STMicroelectronics’ intellectual property rights, the redistribution, reproduction and use in source and binary forms of the
-  * software or any part thereof, with or without modification, are permitted provided that the following conditions are met:
-  *
-  * 1. Redistribution of source code (modified or not) must retain any copyright notice, this list of conditions and the disclaimer
-  *    set forth below as items 11 and 12.
-  * 2. Redistributions in binary form, except as embedded into a microcontroller or microprocessor device or a software update
-  *    for such device, must reproduce any copyright notice provided with the binary code, this list of conditions, and the
-  * disclaimer set forth below as items 11 and 12, in documentation and/or other materials provided with the distribution.
-  * 3. Neither the name of STMicroelectronics nor the names of other contributors to this software may be used to endorse or
-  *    promote products derived from this software or part thereof without specific written permission.
-  * 4. This software or any part thereof, including modifications and/or derivative works of this software, must be used and
-  *    execute solely and exclusively on or in combination with a secure microcontroller device manufactured by or for
-  * STMicroelectronics.
-  * 5. No use, reproduction or redistribution of this software partially or totally may be done in any manner that would subject this
-  *    software to any Open Source Terms. “Open Source Terms” shall mean any open source license which requires as part of
-  *    distribution of software that the source code of such software is distributed therewith or otherwise made available, or open
-  *    source license that substantially complies with the Open Source definition specified at www.opensource.org and any other
-  *    comparable open source license such as for example GNU General Public License (GPL), Eclipse Public License (EPL),
-  *    Apache Software License, BSD license or MIT license.
-  * 6. STMicroelectronics has no obligation to provide any maintenance, support or updates for the software.
-  * 7. The software is and will remain the exclusive property of STMicroelectronics and its licensors. The recipient will not take
-  *    any action that jeopardizes STMicroelectronics and its licensors' proprietary rights or acquire any rights in the software,
-  *    except the limited rights specified hereunder.
-  * 8. The recipient shall comply with all applicable laws and regulations affecting the use of the software or any part thereof
-  *    including any applicable export control law or regulation.
-  * 9. Redistribution and use of this software or any part thereof other than as permitted under this license is void and will
-  *    automatically terminate your rights under this license.
-  * 10. Anti-Bribery; Anti-Corruption. The recipient shall not violate, or permit any third party to violate, any applicable anti-bribery
-  *     or anti-corruption law, or STMicroelectronics’ Code of Conduct that is available on www.st.com. In the event of a violation,
-  *     the recipient shall notify STMicroelectronics and STMicroelectronics may terminate this Agreement.
-  * 11. THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS,
-  *     IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-  *     MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY
-  *     INTELLECTUAL PROPERTY RIGHTS, WHICH ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW.
-  *     IN NO EVENT SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-  *     INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-  *     PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-  *     INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-  *     LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-  *     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  * 12. EXCEPT AS EXPRESSLY PERMITTED HEREUNDER, NO LICENSE OR OTHER RIGHTS, WHETHER EXPRESS
-  *     OR IMPLIED, ARE GRANTED UNDER ANY PATENT OR OTHER INTELLECTUAL PROPERTY RIGHTS OF
-  *     STMICROELECTRONICS OR ANY THIRD PARTY.
-  ******************************************************************************
-  */
+ * @attention
+ *
+ * <h2><center>&copy; COPYRIGHT 2020 STMicroelectronics</center></h2>
+ *
+ * Licensed under ST MYLIBERTY SOFTWARE LICENSE AGREEMENT (the "License");
+ * You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at:
+ *
+ *        http://www.st.com/myliberty
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied,
+ * AND SPECIFICALLY DISCLAIMING THE IMPLIED WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+ *
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *********************************************************************************************
+ */
+
 #include <string.h>
 #include <strings.h>
 #include <inttypes.h>
@@ -81,6 +45,8 @@
 #undef ERR
 #define VERB(...) if (opt.verbose) fprintf(stderr, __VA_ARGS__)
 #define ERR(...) fprintf(stderr, __VA_ARGS__)
+
+int debug_level = 4;
 
 char *help =
     "Usage: [options] <filename>\n"
@@ -162,8 +128,12 @@ parse_opts(int argc, char **argv)
             int err = 1;
             sscanf(optarg, "%i", (int *)&opt.slot);
             if ( (opt.slot == STSAFEA_KEY_SLOT_0) ||
-                 (opt.slot == STSAFEA_KEY_SLOT_1) ||
-                 (opt.slot == STSAFEA_KEY_SLOT_EPHEMERAL) ) {
+                 (opt.slot == STSAFEA_KEY_SLOT_1)
+#if STSAFE_ECDH_ENABLE
+		 || (opt.slot == STSAFEA_KEY_SLOT_EPHEMERAL)
+#endif
+	       ) {
+
                  err = 0;
             }
             if (err) {
@@ -211,7 +181,6 @@ main(int argc, char **argv)
 
     unsigned long          opensslerr    = 0;
     int                    nid           = -1;
-    BIO                   *outbio        = NULL;
     EC_KEY                *myecc         = NULL;
     EVP_PKEY              *pkey          = NULL;
     ENGINE                *stsafe_engine = NULL;
@@ -294,7 +263,29 @@ main(int argc, char **argv)
         ENGINE_free(stsafe_engine);
         exit(EXIT_FAILURE);
     }
+#if 0
+    // get Serial;
 
+    if (!ENGINE_ctrl(stsafe_engine, STSAFE_CMD_GET_SERIAL_NUMBER, 0, data.serial, NULL)) {
+        opensslerr = ERR_get_error();
+        ERR("STSAFEKEYGEN> %s: ENGINE_ctrl could not get serial number failed\n", __func__);
+        if (ERR_error_string(opensslerr, opensslerrbuff) != NULL) {
+            ERR("STSAFEKEYGEN> %s: OpenSSL error %ld %s\n", __func__, opensslerr, opensslerrbuff);
+        }
+        ENGINE_free(stsafe_engine);
+        exit(EXIT_FAILURE);
+    }
+#endif
+    // Set the slot
+    if (!ENGINE_ctrl(stsafe_engine, STSAFE_CMD_SET_GEN_KEY_SLOT, opt.slot, NULL, NULL)) {
+        opensslerr = ERR_get_error();
+        ERR("STSAFEKEYGEN> %s: ENGINE_ctrl could not slet Slot %d failed\n", __func__, opt.slot);
+        if (ERR_error_string(opensslerr, opensslerrbuff) != NULL) {
+            ERR("STSAFEKEYGEN> %s: OpenSSL error %ld %s\n", __func__, opensslerr, opensslerrbuff);
+        }
+        ENGINE_free(stsafe_engine);
+        exit(EXIT_FAILURE);
+    }
     // Generate the key
     VERB("STSAFEKEYGEN> %s: Generating the key\n", __func__);
 
@@ -339,6 +330,7 @@ main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
+#if 0
     pkey = EVP_PKEY_new();
     if (pkey == NULL) {
         opensslerr = ERR_get_error();
@@ -360,7 +352,6 @@ main(int argc, char **argv)
         ENGINE_free(stsafe_engine);
         exit(EXIT_FAILURE);
     }
-
     // Write to file
     VERB("STSAFEKEYGEN> %s: Writing Public Key to %s\n", __func__, opt.filename);
     outbio = BIO_new_file(opt.filename, "w");
@@ -385,7 +376,10 @@ main(int argc, char **argv)
         ENGINE_free(stsafe_engine);
         exit(EXIT_FAILURE);
     }
+#else
 
+    stsafe_key_write(myecc, opt.filename);
+#endif
     // tidy up
     EVP_PKEY_free(pkey);
 
