@@ -91,6 +91,7 @@ target_include_directories(
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/inc>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/lib/STSAFE_Axx0/CoreModules/Inc>
+        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
 )
 
 target_compile_options(
